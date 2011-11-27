@@ -2,11 +2,11 @@
 
 open Possum
 
-let gTokens = [ (AtomNode "print"); (StringNode "foo");
-                (AtomNode "print"); AtomNode("+"); IntegerNode(5); IntegerNode(3);
-                (AtomNode "define"); AtomNode("g"); AtomNode("+"); IntegerNode(5); AtomNode("+"); IntegerNode(2); IntegerNode(2);
-                AtomNode "print"; AtomNode "g";
-                AtomNode "defun"; AtomNode "foo"; AtomNode "x"; AtomNode "is"; AtomNode "print"; AtomNode "+"; IntegerNode 2; IntegerNode 5; AtomNode "end";
+let gTokens = [ //(AtomNode "print"); (StringNode "foo");
+                //(AtomNode "print"); AtomNode("+"); IntegerNode(5); IntegerNode(3);
+                //(AtomNode "define"); AtomNode("g"); AtomNode("+"); IntegerNode(5); AtomNode("+"); IntegerNode(2); IntegerNode(2);
+                //AtomNode "print"; AtomNode "g";
+                AtomNode "defun"; AtomNode "foo"; AtomNode "x"; AtomNode "is"; AtomNode "print"; StringNode "whee from foo!"; AtomNode "print"; AtomNode "+"; IntegerNode 2; IntegerNode 5; AtomNode "end";
                 AtomNode "print"; AtomNode "foo"; IntegerNode 666;
                 //(AtomNode "dix"); AtomNode("+"); AtomNode("x"); StringNode("y") ]
                 ]

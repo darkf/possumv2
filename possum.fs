@@ -92,12 +92,12 @@ let rec parseUntil (tc : Consumable) (until : string) : expr list =
     let t = tc.peek ()
     match t with
       Some (AtomNode s) when s = until ->
-          printfn "||| %s = %s" (exprToString t.Value) until
+          //printfn "||| %s = %s" (exprToString t.Value) until
           ignore (tc.consume ())
           xs
       | None -> xs
       | _ ->
-          printfn "| %s != %s" (exprToString t.Value) until
+          //printfn "| %s != %s" (exprToString t.Value) until
           iter (xs @ (parseOne tc))
   iter []
 
@@ -119,7 +119,7 @@ and parseOne (tc : Consumable) : expr list =
           | "defun" ->
             printfn "defun"
             let name = (tc.consume ()).Value
-            printfn "> defun: %s" (exprToString name)
+            //printfn "> defun: %s" (exprToString name)
             let args = parseUntil tc "is"
             let body = parseBody tc
             
@@ -128,12 +128,12 @@ and parseOne (tc : Consumable) : expr list =
             
             let fn (xargs : expr list) : expr =
               printfn "- this is fn! (arg 0 = %s)" (exprToString xargs.[0])
-              //evalConsumable (Consumable body)
+              evalConsumable (Consumable body)
               NilNode
             
             let f = FunctionNode (name.ToString(), args.Length, fn)
             gSym.[name.ToString()] <- f
-            printfn "::: %s" (name.ToString ())
+            //printfn "::: %s" (name.ToString ())
             [f]
         else
           match lookup s with
@@ -155,7 +155,7 @@ and parseN (tc : Consumable) (n : int) : expr list =
     out <- out @ (parseOne tc)
   out
 
-let parseExprs (tc : Consumable) =
+and parseExprs (tc : Consumable) =
   let rec iter xs =
     let r = parseOne tc
     match r with
@@ -164,7 +164,7 @@ let parseExprs (tc : Consumable) =
 
   Consumable (iter [])
 
-let rec evalOne (tc : Consumable) =
+and evalOne (tc : Consumable) =
   let t = tc.consume ()
   match t with
     Some (AtomNode s) ->
@@ -193,7 +193,7 @@ let rec evalOne (tc : Consumable) =
   | None -> printfn "<<<none>>>"; NilNode
   | _ -> printfn "other (_)"; NilNode
 
-let evalConsumable (tc : Consumable) =
+and evalConsumable (tc : Consumable) =
   let rec iter last =
     while tc.remaining () > 0 do
       ignore (evalOne tc)
