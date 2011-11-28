@@ -92,21 +92,16 @@ let rec parseUntil (tc : Consumable) (until : string) : expr list =
     let t = tc.peek ()
     match t with
       Some (AtomNode s) when s = until ->
-          //printfn "||| %s = %s" (exprToString t.Value) until
           ignore (tc.consume ())
           xs
       | None -> xs
       | _ ->
-          //printfn "| %s != %s" (exprToString t.Value) until
           iter (xs @ (parseOne tc))
   iter []
 
 and parseBody (tc : Consumable) : expr list =
   // parse until "end", basically
-  let x = parseUntil tc "end"
-  //printfn "---"
-  //printConsumable tc
-  x
+  parseUntil tc "end"
 
 and parseOne (tc : Consumable) : expr list =
     let t = tc.consume ()
