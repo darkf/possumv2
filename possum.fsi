@@ -5,6 +5,7 @@ type expr = AtomNode of string
           | StringNode of string
           | IntegerNode of int
           | FunctionNode of string * int * (expr list -> expr)
+          | BoolNode of bool
           | NilNode
 
 [<Class>]

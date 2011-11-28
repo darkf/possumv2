@@ -7,6 +7,7 @@ type expr = AtomNode of string
           | StringNode of string
           | IntegerNode of int
           | FunctionNode of string * int * (expr list -> expr)
+          | BoolNode of bool
           | NilNode
 
           with
@@ -65,6 +66,24 @@ let exprToInt (e : expr) : int =
     (IntegerNode i) -> i
   | _ -> (-1)
 
+let exprToBool (e : expr) : bool =
+  match e with
+    (BoolNode b) -> b
+  | _ -> false
+
+let exprEquals (x : expr) (y : expr) : bool =
+  match x with
+    | IntegerNode i ->
+      match y with
+        | IntegerNode i2 ->
+          i = i2
+        | _ ->
+          printfn "can't ="
+          false
+    | _ ->
+      printfn "can't ="
+      false
+
 let lookup name =
   if gSym.ContainsKey name then
     Some gSym.[name]
@@ -122,7 +141,7 @@ and parseOne (tc : Consumable) : expr list =
             //  printfn "%s -> %s" k (exprToString v))
             
             let fn (xargs : expr list) : expr =
-              printfn "- this is fn! (arg 0 = %s)" (exprToString xargs.[0])
+              //printfn "- this is fn! (arg 0 = %s)" (exprToString xargs.[0])
               evalConsumable (Consumable body)
               NilNode
             
@@ -130,15 +149,18 @@ and parseOne (tc : Consumable) : expr list =
             gSym.[name.ToString()] <- f
             //printfn "::: %s" (name.ToString ())
             [f]
+          | "cond" ->
+            printfn "parse cond"
+            [AtomNode "cond"] @ (parseUntil tc "end") @ [AtomNode "end"]
         else
           match lookup s with
             Some (FunctionNode (name, arity, fn)) ->
-              //printfn "consuming arguments for function %s: %d" name arity
+              printfn "> consuming arguments for function %s: %d" name arity
               let args = parseN tc arity
               [AtomNode s] @ args
          
           | _ -> [AtomNode s]
-    | Some (StringNode _ as n) | Some (IntegerNode _ as n) -> [n]
+    | Some (StringNode _ as n) | Some (IntegerNode _ as n) | Some (BoolNode _ as n) -> [n]
     | None -> []
     | _ ->
       printfn "other"
@@ -181,9 +203,10 @@ and evalOne (tc : Consumable) =
           | None ->
             printfn "error: unknown binding '%s'" s
             // todo: error
+            assert false
             NilNode
 
-  | Some (StringNode _ as n) | Some (IntegerNode _ as n) -> n
+  | Some (StringNode _ as n) | Some (IntegerNode _ as n) | Some (BoolNode _ as n) -> n
   | Some node -> printfn "other: %s" (exprToString node); NilNode
   | None -> printfn "<<<none>>>"; NilNode
   | _ -> printfn "other (_)"; NilNode
@@ -208,9 +231,41 @@ let _defineSF (tc : Consumable) : expr =
       value
   | _ -> assert false; NilNode // todo: figure out how to do error handling (exceptions or something)
 
+let _condSF (tc : Consumable) : expr =
+  // cond
+  //   or nil? x empty? x
+  //     print "nil or empty"
+  //   true
+  //     print "not nil or empty"
+  // end
+
+  let rec iter () =
+    match tc.peek() with
+      | Some (AtomNode "end") ->
+        ignore (tc.consume ())
+        NilNode
+      | _ ->
+        let cond = evalOne tc
+       
+        if (exprToBool cond) = true then
+          printfn "true!"
+          let r = evalOne tc
+          ignore (parseUntil tc "end")
+          r
+        else
+          ignore (parseOne tc) // get rid of path that didn't match
+          iter ()
+  iter ()
+
 let initSym () =
   gSym.["print"] <- FunctionNode ("print", 1, (fun args -> printfn ": %s" (exprToString args.[0]); NilNode))
   gSym.["+"] <- FunctionNode ("+", 2, _fnPlus)
+  gSym.["="] <- FunctionNode ("=", 2, fun args -> 
+    let r = (exprEquals args.[0] args.[1])
+    printfn "eq? : %s" (if r = true then "true" else "false")
+    BoolNode r)
 
   gSpecialForms.["define"] <- _defineSF
-  gSpecialForms.["defun"] <- fun args -> NilNode
+  gSpecialForms.["defun"] <- fun args -> NilNode // todo: shouldn't need this hack (just to fill the symtable)
+  gSpecialForms.["cond"] <- _condSF
+
