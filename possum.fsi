@@ -35,7 +35,7 @@ val parseN     : Consumable -> int -> expr list
 val parseExprs : Consumable -> Consumable
 
 val evalOne : Consumable -> expr
-val evalConsumable : Consumable -> unit
+val evalConsumable : Consumable -> expr
 
 val gSym : System.Collections.Generic.Dictionary<string, expr>
 val gSpecialForms : System.Collections.Generic.Dictionary<string, (Consumable -> expr)>

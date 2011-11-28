@@ -8,7 +8,7 @@ let gTokens = [ //(AtomNode "print"); (StringNode "foo");
                 //AtomNode "print"; AtomNode "g";
                 //AtomNode "defun"; AtomNode "foo"; AtomNode "x"; AtomNode "is"; AtomNode "print"; StringNode "whee from foo!"; AtomNode "print"; AtomNode "+"; IntegerNode 2; IntegerNode 5; AtomNode "end";
                 //AtomNode "print"; AtomNode "foo"; IntegerNode 666;
-                AtomNode "defun"; AtomNode "foo"; AtomNode "is";
+                (*AtomNode "defun"; AtomNode "foo"; AtomNode "is";
                   AtomNode "define"; AtomNode "g"; AtomNode "+"; IntegerNode 5; IntegerNode 10;
                   AtomNode "cond";
                     AtomNode "="; IntegerNode 5; IntegerNode 5;
@@ -19,7 +19,22 @@ let gTokens = [ //(AtomNode "print"); (StringNode "foo");
                   AtomNode "print"; StringNode "outer";
                 AtomNode "end";
 
-                AtomNode "foo";
+                AtomNode "foo";*)
+                (*AtomNode "defun"; AtomNode "fk"; AtomNode "x"; AtomNode "y"; AtomNode "is";
+                  AtomNode "print"; StringNode "foo";
+                  AtomNode "print"; AtomNode "x";
+                  AtomNode "print"; AtomNode "y";
+                AtomNode "end";
+                AtomNode "fk"; IntegerNode 5; IntegerNode 10;*)
+                AtomNode "defun"; AtomNode "f"; AtomNode "n"; AtomNode "is";
+                  AtomNode "cond";
+                    AtomNode "="; AtomNode "n"; IntegerNode 0;
+                      IntegerNode 1;
+                    BoolNode true;
+                      AtomNode "*"; AtomNode "n"; AtomNode "f"; AtomNode "-"; AtomNode "n"; IntegerNode 1;
+                  AtomNode "end";
+                AtomNode "end";
+                AtomNode "print"; AtomNode "f"; IntegerNode 10;
                 ]
 
 let outputTokens () =
@@ -32,6 +47,6 @@ let main =
   initSym ()
 
   let st = parseExprs tc
-  evalConsumable st
+  ignore (evalConsumable st)
 
   System.Console.ReadKey ()

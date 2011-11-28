@@ -2,7 +2,7 @@
 
 open System
 
-//[<CustomEquality>]
+//[<CustomEquality; NoComparison>]
 type expr = AtomNode of string
           | StringNode of string
           | IntegerNode of int
@@ -16,11 +16,13 @@ type expr = AtomNode of string
               | AtomNode s -> s
               | _ -> x.ToString()
 
-          (*interface IEquatable with
-            override x.Equals y =
+          (*override x.Equals y =
                match y with
-                FunctionNode (name, arity, fn) -> name = x.name
-                | _ -> x = y*)
+                | :? expr as z ->
+                  match z with
+                    | FunctionNode (name, arity, fn) -> x.name = name
+                    | AtomNode s -> z = s
+                | _ -> false*)
 
 
 type Consumable(toks : expr list) =
@@ -142,8 +144,14 @@ and parseOne (tc : Consumable) : expr list =
             
             let fn (xargs : expr list) : expr =
               //printfn "- this is fn! (arg 0 = %s)" (exprToString xargs.[0])
+              //let v = dict (List.zip args xargs)
+              for i in 0..args.Length-1 do
+                //let Some(AtomNode a) = args.[i]
+                match args.[i] with
+                  | AtomNode s -> gSym.[s] <- xargs.[i]
+                  | _ -> assert false // todo: error
+
               evalConsumable (Consumable body)
-              NilNode
             
             let f = FunctionNode (name.ToString(), args.Length, fn)
             gSym.[name.ToString()] <- f
@@ -211,15 +219,22 @@ and evalOne (tc : Consumable) =
   | None -> printfn "<<<none>>>"; NilNode
   | _ -> printfn "other (_)"; NilNode
 
-and evalConsumable (tc : Consumable) =
+and evalConsumable (tc : Consumable) : expr =
   let rec iter last =
-    while tc.remaining () > 0 do
-      ignore (evalOne tc)
+    match tc.peek() with
+      | None -> last
+      | _ -> iter (evalOne tc)
 
   iter NilNode
 
 let _fnPlus (args : expr list) : expr =
   IntegerNode ((exprToInt args.[0]) + (exprToInt args.[1]))
+
+let _fnMinus (args : expr list) : expr =
+  IntegerNode ((exprToInt args.[0]) - (exprToInt args.[1]))
+
+let _fnMul (args : expr list) : expr =
+  IntegerNode ((exprToInt args.[0]) * (exprToInt args.[1]))
 
 let _defineSF (tc : Consumable) : expr =
   let name = tc.consume ()
@@ -260,6 +275,8 @@ let _condSF (tc : Consumable) : expr =
 let initSym () =
   gSym.["print"] <- FunctionNode ("print", 1, (fun args -> printfn ": %s" (exprToString args.[0]); NilNode))
   gSym.["+"] <- FunctionNode ("+", 2, _fnPlus)
+  gSym.["-"] <- FunctionNode ("-", 2, _fnMinus)
+  gSym.["*"] <- FunctionNode ("*", 2, _fnMul)
   gSym.["="] <- FunctionNode ("=", 2, fun args -> 
     let r = (exprEquals args.[0] args.[1])
     printfn "eq? : %s" (if r = true then "true" else "false")
