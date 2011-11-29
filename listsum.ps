@@ -1,0 +1,14 @@
+defun list-sum x is
+  cond
+    nil? x
+      0
+    pair? car x
+      + list-sum car x list-sum cdr x
+    true
+      + car x list-sum cdr x
+  end
+end
+
+define lst cons 1 cons 2 cons 3 cons 4 nil
+print "list sum"
+print list-sum lst
