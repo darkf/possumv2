@@ -26,8 +26,7 @@
     </DocumentationFile>
     <OtherFlags>
     </OtherFlags>
-    <StartArguments>
-    </StartArguments>
+    <StartArguments>factorial.ps</StartArguments>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
     <DebugType>pdbonly</DebugType>
