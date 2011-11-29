@@ -1,4 +1,9 @@
-﻿module Main
+﻿// possum v2.0.0
+// copyright (c) 2011 darkf
+// licensed under the terms of the MIT license
+// see LICENSE for details
+
+module Main
 
 open Possum
 open Parser
