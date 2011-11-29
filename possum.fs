@@ -82,16 +82,14 @@ let exprToBool (e : expr) : bool =
   | _ -> false
 
 let exprEquals (x : expr) (y : expr) : bool =
-  match x with
-    | IntegerNode i ->
-      match y with
-        | IntegerNode i2 ->
-          i = i2
-        | _ ->
-          printfn "can't ="
-          false
-    | _ ->
-      printfn "can't ="
+  match (x, y) with
+    | (IntegerNode a, IntegerNode b) -> a = b
+    | (StringNode a, StringNode b) -> a = b
+    | (BoolNode a, BoolNode b) -> a = b
+    | (AtomNode a, AtomNode b) -> a = b
+    | (NilNode, NilNode) -> true
+    | (a, b) ->
+      printfn "!!! warning: equals called on (%A,%A) - returning false" a b
       false
 
 let lookup name =
