@@ -14,7 +14,7 @@ type expr = AtomNode of string
           override x.ToString () =
             match x with
               | AtomNode s -> s
-              | _ -> x.ToString()
+              | _ -> x.GetType().ToString() //x.ToString()
 
           (*override x.Equals y =
                match y with
@@ -60,8 +60,9 @@ let exprToString e =
   | (StringNode s) -> sprintf "<str '%s'>" s
   | (IntegerNode i) -> sprintf "<int %d>" i
   | (FunctionNode (name, _, _)) -> sprintf "<fn '%s'>" name
+  | BoolNode b -> sprintf "<bool %s>" (if b = true then "true" else "false")
   | NilNode -> sprintf "<nil>"
-  | _ -> "<<<error>>>"
+  //| _ -> sprintf "<<<error>>> -> %s" (string e)
 
 let exprToInt (e : expr) : int =
   match e with
@@ -168,7 +169,7 @@ and parseOne (tc : Consumable) : expr list =
               [AtomNode s] @ args
          
           | _ -> [AtomNode s]
-    | Some (StringNode _ as n) | Some (IntegerNode _ as n) | Some (BoolNode _ as n) -> [n]
+    | Some (StringNode _ as n) | Some (IntegerNode _ as n) | Some (BoolNode _ as n) | Some (NilNode as n) -> [n]
     | None -> []
     | _ ->
       printfn "other"
@@ -214,7 +215,8 @@ and evalOne (tc : Consumable) =
             assert false
             NilNode
 
-  | Some (StringNode _ as n) | Some (IntegerNode _ as n) | Some (BoolNode _ as n) -> n
+  | Some (StringNode _ as n) | Some (IntegerNode _ as n) | Some (BoolNode _ as n) | Some (NilNode as n) -> n
+  | Some (FunctionNode (_, _, _) as n) -> n
   | Some node -> printfn "other: %s" (exprToString node); NilNode
   | None -> printfn "<<<none>>>"; NilNode
   | _ -> printfn "other (_)"; NilNode
