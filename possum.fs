@@ -14,7 +14,7 @@ type expr = AtomNode of string
           override x.ToString () =
             match x with
               | AtomNode s -> s
-              | _ -> x.GetType().ToString() //x.ToString()
+              | _ -> x.GetType().ToString()
 
           (*override x.Equals y =
                match y with
@@ -67,7 +67,7 @@ let exprToString e =
 let exprToInt (e : expr) : int =
   match e with
     (IntegerNode i) -> i
-  | _ -> (-1)
+  | _ -> -1
 
 let exprToBool (e : expr) : bool =
   match e with
@@ -130,24 +130,15 @@ and parseOne (tc : Consumable) : expr list =
     match t with
       Some (AtomNode s) ->
         if gSpecialForms.ContainsKey s then
-          //[AtomNode s] @ (parseN tc gSpecialForms.[s].arity)
           match s with
-            "define" -> [AtomNode s] @ (parseN tc 2)
+          | "define" -> [AtomNode s] @ (parseN tc 2)
           | "defun" ->
-            printfn "defun"
             let name = (tc.consume ()).Value
-            //printfn "> defun: %s" (exprToString name)
             let args = parseUntil tc "is"
             let body = parseBody tc
             
-            //gSym |> Seq.iter (fun (KeyValue (k,v)) ->
-            //  printfn "%s -> %s" k (exprToString v))
-            
             let fn (xargs : expr list) : expr =
-              //printfn "- this is fn! (arg 0 = %s)" (exprToString xargs.[0])
-              //let v = dict (List.zip args xargs)
               for i in 0..args.Length-1 do
-                //let Some(AtomNode a) = args.[i]
                 match args.[i] with
                   | AtomNode s -> gSym.[s] <- xargs.[i]
                   | _ -> assert false // todo: error
@@ -156,15 +147,17 @@ and parseOne (tc : Consumable) : expr list =
             
             let f = FunctionNode (name.ToString(), args.Length, fn)
             gSym.[name.ToString()] <- f
-            //printfn "::: %s" (name.ToString ())
             [f]
           | "cond" ->
             printfn "parse cond"
             [AtomNode "cond"] @ (parseUntil tc "end") @ [AtomNode "end"]
+          | _ ->
+            printfn "error: special form isn't covered in parsing: %s" s
+            assert false; [NilNode]
         else
           match lookup s with
             Some (FunctionNode (name, arity, fn)) ->
-              printfn "> consuming arguments for function %s: %d" name arity
+              //printfn "> consuming arguments for function %s: %d" name arity
               let args = parseN tc arity
               [AtomNode s] @ args
          
@@ -200,15 +193,12 @@ and evalOne (tc : Consumable) =
         let r = lookup s
         match r with
           Some (FunctionNode (name, arity, fn)) ->
-            //printfn "func (%s)" name
-            // apply func
+            // apply function
             let mutable xargs = []
-            for i in [1..arity] do
+            for i in 1..arity do
               xargs <- xargs @ [evalOne tc]
             fn xargs
-          | Some a ->
-            //printfn "variable"
-            a
+          | Some a -> a // variable value
           | None ->
             printfn "error: unknown binding '%s'" s
             // todo: error
@@ -217,9 +207,8 @@ and evalOne (tc : Consumable) =
 
   | Some (StringNode _ as n) | Some (IntegerNode _ as n) | Some (BoolNode _ as n) | Some (NilNode as n) -> n
   | Some (FunctionNode (_, _, _) as n) -> n
-  | Some node -> printfn "other: %s" (exprToString node); NilNode
   | None -> printfn "<<<none>>>"; NilNode
-  | _ -> printfn "other (_)"; NilNode
+  //| _ -> printfn "other (_)"; NilNode
 
 and evalConsumable (tc : Consumable) : expr =
   let rec iter last =
