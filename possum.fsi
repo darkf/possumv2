@@ -13,6 +13,9 @@ type expr = AtomNode of string
           | BoolNode of bool
           | NilNode
 
+exception ParseError of string
+exception BindingError of string * string
+
 [<Class>]
 type Consumable =
   new : expr list -> Consumable

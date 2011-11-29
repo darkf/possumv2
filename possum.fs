@@ -29,6 +29,8 @@ type expr = AtomNode of string
                     | AtomNode s -> z = s
                 | _ -> false*)
 
+exception ParseError of string
+exception BindingError of string * string
 
 type Consumable(toks : expr list) =
   let tokens = toks
@@ -146,7 +148,7 @@ and parseOne (tc : Consumable) : expr list =
               for i in 0..args.Length-1 do
                 match args.[i] with
                   | AtomNode s -> gSym.[s] <- xargs.[i]
-                  | _ -> assert false // todo: error
+                  | _ -> raise (ParseError "argument not an atom")
 
               evalConsumable (Consumable body)
             
@@ -157,8 +159,7 @@ and parseOne (tc : Consumable) : expr list =
             //printfn "parse cond"
             [AtomNode "cond"] @ (parseUntil tc "end") @ [AtomNode "end"]
           | _ ->
-            printfn "error: special form isn't covered in parsing: %s" s
-            assert false; [NilNode]
+            raise (ParseError ("Special form isn't covered in parsing: " + s))
         else
           match lookup s with
             Some (FunctionNode (name, arity, fn)) ->
@@ -205,14 +206,11 @@ and evalOne (tc : Consumable) =
             fn xargs
           | Some a -> a // variable value
           | None ->
-            printfn "error: unknown binding '%s'" s
-            // todo: error
-            assert false
-            NilNode
+            raise (BindingError ((sprintf "Unknown binding '%s'" s), s))
 
   | Some (StringNode _ as n) | Some (IntegerNode _ as n) | Some (BoolNode _ as n) | Some (NilNode as n) -> n
   | Some (FunctionNode (_, _, _) as n) -> n
-  | None -> printfn "<<<none>>>"; NilNode
+  | None -> raise (ParseError "None given to evalOne")
   //| _ -> printfn "other (_)"; NilNode
 
 and evalConsumable (tc : Consumable) : expr =
@@ -233,14 +231,13 @@ let _fnMul (args : expr list) : expr =
   IntegerNode ((exprToInt args.[0]) * (exprToInt args.[1]))
 
 let _defineSF (tc : Consumable) : expr =
-  let name = tc.consume ()
-  match name with
-    Some (AtomNode s) ->
+  match tc.consume () with
+    | Some (AtomNode s) ->
       let value = evalOne tc
-      printfn "> defining '%s' to %s" s (exprToString value)
+      //printfn "> defining '%s' to %s" s (exprToString value)
       gSym.[s] <- value
       value
-  | _ -> assert false; NilNode // todo: figure out how to do error handling (exceptions or something)
+    | _ -> raise (ParseError "non-atom given to define")
 
 let _condSF (tc : Consumable) : expr =
   // cond
