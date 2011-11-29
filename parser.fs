@@ -33,7 +33,7 @@ let parseString (str : string) =
         acc <- ""
       | '"' when inString = false && inAtom = false ->
         inString <- true
-      | ' ' | '\t' | '\r' | '\n' ->
+      | ' ' | '\t' | '\r' | '\n' when inString = false ->
         if acc.Length > 0 then
           xs <- xs @ [getNode acc]
           acc <- ""
