@@ -5,16 +5,21 @@
 
 module Possum
 
+(*type 'a pslist = Cons of 'a * 'a pslist
+               | Empty;;*)
+
 //[<CustomEquality>]
 type expr = AtomNode of string
           | StringNode of string
           | IntegerNode of int
           | FunctionNode of string * int * (expr list -> expr)
+          | PairNode of expr * expr
           | BoolNode of bool
           | NilNode
 
 exception ParseError of string
 exception BindingError of string * string
+exception SemanticError of string
 
 [<Class>]
 type Consumable =

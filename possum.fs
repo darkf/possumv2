@@ -7,11 +7,15 @@ module Possum
 
 open System
 
+(*type 'a pslist = Cons of 'a * 'a pslist
+               | Empty;;*)
+
 //[<CustomEquality; NoComparison>]
 type expr = AtomNode of string
           | StringNode of string
           | IntegerNode of int
           | FunctionNode of string * int * (expr list -> expr)
+          | PairNode of expr * expr
           | BoolNode of bool
           | NilNode
 
@@ -31,6 +35,7 @@ type expr = AtomNode of string
 
 exception ParseError of string
 exception BindingError of string * string
+exception SemanticError of string
 
 type Consumable(toks : expr list) =
   let tokens = toks
@@ -161,7 +166,7 @@ and parseOne (tc : Consumable) : expr list =
         else
           match lookup s with
             Some (FunctionNode (name, arity, fn)) ->
-              //printfn "> consuming arguments for function %s: %d" name arity
+              printfn "> consuming arguments for function %s: %d" name arity
               let args = parseN tc arity
               [AtomNode s] @ args
          
@@ -271,6 +276,26 @@ let initSym () =
     let r = (exprEquals args.[0] args.[1])
     //printfn "eq? : %s" (if r = true then "true" else "false")
     BoolNode r)
+
+  gSym.["cons"] <- FunctionNode ("cons", 2, fun args -> PairNode (args.[0], args.[1]))
+  gSym.["car"] <- FunctionNode ("car", 1, fun args ->
+    match args.[0] with
+      | PairNode (a, _) -> a
+      | _ -> raise (SemanticError "non-pair passed to car"))
+  gSym.["cdr"] <- FunctionNode ("cdr", 1, fun args ->
+    match args.[0] with
+      | PairNode (_, b) -> b
+      | _ -> raise (SemanticError "non-pair passed to cdr"))
+
+  gSym.["pair?"] <- FunctionNode ("pair?", 1, fun args ->
+    match args.[0] with
+      | PairNode (_, _) -> BoolNode true
+      | _ -> BoolNode false)
+
+  gSym.["nil?"] <- FunctionNode ("nil?", 1, fun args ->
+    match args.[0] with
+      | NilNode -> BoolNode true
+      | _ -> BoolNode false)
 
   gSpecialForms.["define"] <- _defineSF
   gSpecialForms.["defun"] <- fun args -> NilNode // todo: shouldn't need this hack (just to fill the symtable)
