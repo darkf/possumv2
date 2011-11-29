@@ -149,7 +149,7 @@ and parseOne (tc : Consumable) : expr list =
             gSym.[name.ToString()] <- f
             [f]
           | "cond" ->
-            printfn "parse cond"
+            //printfn "parse cond"
             [AtomNode "cond"] @ (parseUntil tc "end") @ [AtomNode "end"]
           | _ ->
             printfn "error: special form isn't covered in parsing: %s" s
@@ -254,7 +254,6 @@ let _condSF (tc : Consumable) : expr =
         let cond = evalOne tc
        
         if (exprToBool cond) = true then
-          printfn "true!"
           let r = evalOne tc
           ignore (parseUntil tc "end")
           r
@@ -270,7 +269,7 @@ let initSym () =
   gSym.["*"] <- FunctionNode ("*", 2, _fnMul)
   gSym.["="] <- FunctionNode ("=", 2, fun args -> 
     let r = (exprEquals args.[0] args.[1])
-    printfn "eq? : %s" (if r = true then "true" else "false")
+    //printfn "eq? : %s" (if r = true then "true" else "false")
     BoolNode r)
 
   gSpecialForms.["define"] <- _defineSF

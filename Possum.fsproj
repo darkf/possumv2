@@ -25,6 +25,8 @@
     <DocumentationFile>bin\Debug\ConsoleApplication1.XML</DocumentationFile>
     <OtherFlags>
     </OtherFlags>
+    <StartArguments>
+    </StartArguments>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
     <DebugType>pdbonly</DebugType>

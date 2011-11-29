@@ -7,7 +7,12 @@ let getNode acc =
     | "true" -> BoolNode true
     | "false" -> BoolNode false
     | "nil" -> NilNode
-    | _ -> AtomNode acc
+    | _ ->
+      try
+        IntegerNode (System.Int32.Parse acc)
+      with
+        _ ->
+          AtomNode acc
 
 let parseString (str : string) =
   let mutable acc = ""
