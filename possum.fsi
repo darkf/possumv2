@@ -4,8 +4,7 @@
 // see LICENSE for details
 
 module Possum
-
-open PossumCore
+open Types
 
 (*type 'a pslist = Cons of 'a * 'a pslist
                | Empty;;*)
@@ -25,9 +24,6 @@ type Consumable =
   member seek : int -> int
 
 val printConsumable : Consumable -> unit
-
-val exprToString : expr -> string
-val exprToInt    : expr -> int
 
 val lookup : string -> expr option
 val isFunction : expr option -> bool
