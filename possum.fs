@@ -37,7 +37,8 @@ exception ParseError of string
 exception BindingError of string * string
 exception SemanticError of string
 
-type Environment = { sym : System.Collections.Generic.Dictionary<string, expr>; prev : Environment option; }
+type ExprDict = System.Collections.Generic.Dictionary<string, expr>
+type Environment = { sym : ExprDict; prev : Environment option; }
 
 type Consumable(toks : expr list) =
   let tokens = toks
@@ -65,9 +66,9 @@ type Consumable(toks : expr list) =
       index <- x
     0
 
-let gSym = new Collections.Generic.Dictionary<string, expr>()
+let gSym = new ExprDict()
 let gSpecialForms = new Collections.Generic.Dictionary<string, (Consumable -> expr)>()
-let envstack = new System.Collections.Generic.Stack<Environment>()
+let envstack = new Collections.Generic.Stack<Environment>()
 let globalEnv = {sym=gSym; prev=None}
 
 let exprToString e =
@@ -105,7 +106,7 @@ let lastEnv () =
   envstack.Peek ()
 
 let pushNewEnv () =
-  let r = {sym=new System.Collections.Generic.Dictionary<string, expr>(); prev=Some (lastEnv ())}
+  let r = {sym=new ExprDict(); prev=Some (lastEnv ())}
   envstack.Push r
   r
 

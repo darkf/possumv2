@@ -21,7 +21,8 @@ exception ParseError of string
 exception BindingError of string * string
 exception SemanticError of string
 
-type Environment = { sym : System.Collections.Generic.Dictionary<string, expr>; prev : Environment option; }
+type ExprDict = System.Collections.Generic.Dictionary<string, expr>
+type Environment = { sym : ExprDict; prev : Environment option; }
 
 [<Class>]
 type Consumable =
