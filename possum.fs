@@ -194,7 +194,8 @@ and evalOne (tc : Consumable) =
           | None ->
             raise (BindingError ((sprintf "Unknown binding '%s'" s), s))
 
-  | Some (StringNode _ as n) | Some (IntegerNode _ as n) | Some (BoolNode _ as n) | Some (NilNode as n) -> n
+  | Some (StringNode _ as n) | Some (IntegerNode _ as n) | Some (BoolNode _ as n)
+  | Some (NilNode as n)  | Some (StreamNode _ as n) -> n
   | Some (FunctionNode (_, _, _) as n) -> n
   | None -> raise (ParseError "None given to evalOne")
   //| _ -> printfn "other (_)"; NilNode
