@@ -106,13 +106,10 @@ let lastEnv () =
   envstack.Peek ()
 
 let pushNewEnv () =
-  let r = {sym=new ExprDict(); prev=Some (lastEnv ())}
-  envstack.Push r
-  r
+  envstack.Push {sym=new ExprDict(); prev=Some (lastEnv ())}
 
 let pushEnv env =
   envstack.Push env
-  env
 
 let popEnv () =
   envstack.Pop ()
@@ -188,7 +185,7 @@ and parseOne (tc : Consumable) : expr list =
             let body = parseBody tc
             
             let fn (xargs : expr list) : expr =
-              ignore (pushNewEnv ())
+              pushNewEnv ()
               for i in 0..args.Length-1 do
                 match args.[i] with
                   | AtomNode s -> setSymLocal s xargs.[i]
