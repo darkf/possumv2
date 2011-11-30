@@ -6,36 +6,10 @@
 module Possum
 
 open System
+open PossumCore
 
 (*type 'a pslist = Cons of 'a * 'a pslist
                | Empty;;*)
-
-//[<CustomEquality; NoComparison>]
-type expr = AtomNode of string
-          | StringNode of string
-          | IntegerNode of int
-          | FunctionNode of string * int * (expr list -> expr)
-          | PairNode of expr * expr
-          | BoolNode of bool
-          | NilNode
-
-          with
-          override x.ToString () =
-            match x with
-              | AtomNode s -> s
-              | _ -> x.GetType().ToString()
-
-          (*override x.Equals y =
-               match y with
-                | :? expr as z ->
-                  match z with
-                    | FunctionNode (name, arity, fn) -> x.name = name
-                    | AtomNode s -> z = s
-                | _ -> false*)
-
-exception ParseError of string
-exception BindingError of string * string
-exception SemanticError of string
 
 type ExprDict = System.Collections.Generic.Dictionary<string, expr>
 type Environment = { sym : ExprDict; prev : Environment option; }
@@ -340,6 +314,8 @@ let initSym () =
   gSpecialForms.["define"] <- _defineSF
   gSpecialForms.["defun"] <- fun args -> NilNode // todo: shouldn't need this hack (just to fill the symtable)
   gSpecialForms.["cond"] <- _condSF
+
+  PossumStream.initModule gSym
 
   pushEnv globalEnv
   ()

@@ -6,6 +6,7 @@
 module Parser
 
 open Possum
+open PossumCore
 
 let getNode acc =
   match acc with
