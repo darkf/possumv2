@@ -7,6 +7,13 @@ let fileOpen (args : expr list) : expr =
       StreamNode (new System.IO.FileStream(path, System.IO.FileMode.OpenOrCreate))
     | _ -> raise (SemanticError "non-path passed to file-open")
 
+let socketOpen (args : expr list) : expr =
+  match args.[0] with
+    | StringNode host ->
+      let port = exprToInt args.[1]
+      StreamNode ((new System.Net.Sockets.TcpClient (host, port)).GetStream ())
+    | _ -> raise (SemanticError "non-string passed to socket-open")
+
 let streamRead (args : expr list) : expr =
   match args.[0] with
     | StreamNode s ->
@@ -32,6 +39,8 @@ let streamClose (args : expr list) : expr =
 
 let initModule (sym : ExprDict) =
   sym.["file-open"] <- FunctionNode ("file-open", 1, fileOpen)
+
+  sym.["socket-open"] <- FunctionNode ("socket-open", 2, socketOpen)
 
   sym.["stream-read"] <- FunctionNode ("stream-read", 2, streamRead)
   sym.["stream-read-all"] <- FunctionNode ("stream-read-all", 1, streamReadAll)
