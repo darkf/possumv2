@@ -285,6 +285,11 @@ let initSym () =
   gSpecialForms.["defun"] <- fun args -> NilNode // todo: shouldn't need this hack (just to fill the symtable)
   gSpecialForms.["cond"] <- _condSF
 
+  gSym.["concat"] <- FunctionNode ("concat", 2, fun args ->
+    match (args.[0], args.[1]) with
+      | (StringNode a, StringNode b) -> StringNode (a + b)
+      | _ -> NilNode)
+
   PossumStream.initModule gSym
 
   pushEnv globalEnv
