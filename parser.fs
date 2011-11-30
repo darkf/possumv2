@@ -30,7 +30,7 @@ let parseString (str : string) =
   for i in 0..str.Length-1 do
     match str.[i] with
       // escape codes
-      | '\\' when inString = true -> inEscape <- true
+      | '\\' when inString = true && not inEscape -> inEscape <- true
       | 'n' | 'r' | 't' | '"' | '\\' when inEscape = true ->
         acc <- acc + (match str.[i] with
                         | 'n' -> "\n"
