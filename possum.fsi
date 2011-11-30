@@ -21,6 +21,8 @@ exception ParseError of string
 exception BindingError of string * string
 exception SemanticError of string
 
+type Environment = { sym : System.Collections.Generic.Dictionary<string, expr>; prev : Environment option; }
+
 [<Class>]
 type Consumable =
   new : expr list -> Consumable
@@ -52,5 +54,7 @@ val evalConsumable : Consumable -> expr
 
 val gSym : System.Collections.Generic.Dictionary<string, expr>
 val gSpecialForms : System.Collections.Generic.Dictionary<string, (Consumable -> expr)>
+
+val envstack : System.Collections.Generic.Stack<Environment>
 
 val initSym : unit -> unit

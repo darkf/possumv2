@@ -37,6 +37,8 @@ exception ParseError of string
 exception BindingError of string * string
 exception SemanticError of string
 
+type Environment = { sym : System.Collections.Generic.Dictionary<string, expr>; prev : Environment option; }
+
 type Consumable(toks : expr list) =
   let tokens = toks
   let mutable index = 0
@@ -65,6 +67,8 @@ type Consumable(toks : expr list) =
 
 let gSym = new Collections.Generic.Dictionary<string, expr>()
 let gSpecialForms = new Collections.Generic.Dictionary<string, (Consumable -> expr)>()
+let envstack = new System.Collections.Generic.Stack<Environment>()
+let globalEnv = {sym=gSym; prev=None}
 
 let exprToString e =
   match e with
@@ -97,11 +101,46 @@ let exprEquals (x : expr) (y : expr) : bool =
       printfn "!!! warning: equals called on (%A,%A) - returning false" a b
       false
 
+let lastEnv () =
+  envstack.Peek ()
+
+let pushNewEnv () =
+  let r = {sym=new System.Collections.Generic.Dictionary<string, expr>(); prev=Some (lastEnv ())}
+  envstack.Push r
+  r
+
+let pushEnv env =
+  envstack.Push env
+  env
+
+let popEnv () =
+  envstack.Pop ()
+
 let lookup name =
-  if gSym.ContainsKey name then
-    Some gSym.[name]
-  else
-    None
+  let rec iter env =
+    if env.sym.ContainsKey name then
+      Some env.sym.[name]
+    else
+      match env.prev with
+        | Some a -> iter a
+        | None -> None
+
+  iter (lastEnv ())
+
+let setSymFar name value =
+  let rec iter env =
+    if env.sym.ContainsKey name then
+      env.sym.[name] <- value
+    else
+      // look into the upper scopes
+      match env.prev with
+        | Some a -> iter a
+        | None -> ()
+
+  iter (lastEnv ())
+
+let setSymLocal name value =
+  (lastEnv ()).sym.[name] <- value
 
 let isFunction e =
   match e with
@@ -148,12 +187,15 @@ and parseOne (tc : Consumable) : expr list =
             let body = parseBody tc
             
             let fn (xargs : expr list) : expr =
+              ignore (pushNewEnv ())
               for i in 0..args.Length-1 do
                 match args.[i] with
-                  | AtomNode s -> gSym.[s] <- xargs.[i]
+                  | AtomNode s -> setSymLocal s xargs.[i]
                   | _ -> raise (ParseError "argument not an atom")
 
-              evalConsumable (Consumable body)
+              let r = evalConsumable (Consumable body)
+              ignore (popEnv ())
+              r
             
             let f = FunctionNode (name.ToString(), args.Length, fn)
             gSym.[name.ToString()] <- f
@@ -166,7 +208,7 @@ and parseOne (tc : Consumable) : expr list =
         else
           match lookup s with
             Some (FunctionNode (name, arity, fn)) ->
-              printfn "> consuming arguments for function %s: %d" name arity
+              //printfn "> consuming arguments for function %s: %d" name arity
               let args = parseN tc arity
               [AtomNode s] @ args
          
@@ -238,7 +280,7 @@ let _defineSF (tc : Consumable) : expr =
     | Some (AtomNode s) ->
       let value = evalOne tc
       //printfn "> defining '%s' to %s" s (exprToString value)
-      gSym.[s] <- value
+      setSymLocal s value
       value
     | _ -> raise (ParseError "non-atom given to define")
 
@@ -300,4 +342,7 @@ let initSym () =
   gSpecialForms.["define"] <- _defineSF
   gSpecialForms.["defun"] <- fun args -> NilNode // todo: shouldn't need this hack (just to fill the symtable)
   gSpecialForms.["cond"] <- _condSF
+
+  pushEnv globalEnv
+  ()
 
