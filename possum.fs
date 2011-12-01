@@ -195,7 +195,7 @@ and evalOne (tc : Consumable) =
             raise (BindingError ((sprintf "Unknown binding '%s'" s), s))
 
   | Some (StringNode _ as n) | Some (IntegerNode _ as n) | Some (BoolNode _ as n)
-  | Some (NilNode as n)  | Some (StreamNode _ as n) -> n
+  | Some (NilNode as n)  | Some (StreamNode _ as n) -> n | Some (PairNode (_, _) as n) -> n
   | Some (FunctionNode (_, _, _) as n) -> n
   | None -> raise (ParseError "None given to evalOne")
   //| _ -> printfn "other (_)"; NilNode
@@ -291,6 +291,7 @@ let initSym () =
       | _ -> NilNode)
 
   PossumStream.initModule gSym
+  PossumText.initModule gSym
 
   pushEnv globalEnv
   ()
