@@ -3,6 +3,30 @@
 - Clean up list building (use cons with List.rev instead of xs <- xs @ [...])
 - Fix expr.ToString()
 - Add basic typechecking to builtins
+- Structs? (just scheme-like; defstruct foo is x y end define bar new foo foo-set-x bar 5 print foo-x bar)
+- if special form (ternary-like: if cond then yes else no)
+- s?printf (how to implement this with fixed arity? lists or special form that parses the format string?)
+- For loop iterators (for expr in expr do ... end - e.g. for i in list-range 1 5 do print i end could eventually end up with list comprehension syntax like for x is * i 2 in ... end)
+- While loops
+- Maybe + on strings and lists for concatenation?
+- exprEquals should work for all primitive types
+- REPL
+- Dictionaries
+- set, set-car and set-cdr
 - Unit testing? Maybe?
-- Functions: include, assert, lambda
+- Functions: include, assert, lambda, list (special-form to create lists, e.g. list 1 2 x y 3 4 end)
 - defuns should bind locally so that you can have local nested functions (e.g. a defun iter xs ... end)
+- Fix stream-read-all for sockets
+- Rename define to something more concise (def, let, var, val, etc)
+- Tail call optimization
+- Builtins should use "match args with | [a; b; c]" syntax instead of addressing by index
+- Builtins should have a type signature as a comment (e.g. // stream-close stream -> nil)
+- High order functions should be supported (maybe an apply function)
+- Parser should support comments (# foo, until the end of the line)
+- Error handling inside possum (exceptions? return values? error flag?)
+
+Modules that should be in stdlib:
+- text (regex-match, regex-search, regex-replace, string-replace, string-reverse, string-repeat, lines, unlines, string-split string-substring string-find)
+- stream (socket-open file-open stream-close stream-{read,write}-u?int{8,16,32,64} stream-{read,write} stream-read-all stream-status socket-listen socket-accept)
+- http (http-get http-post)
+- list (ca+dr cd+r caadr list-reverse list-repeat list-length list-splice list-range list-append list-concat map zip filter reduce)
