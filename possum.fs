@@ -6,19 +6,16 @@
 module Possum
 
 open System
+open System.Collections.Generic
 open Types
 
-(*type 'a pslist = Cons of 'a * 'a pslist
-               | Empty;;*)
-
-type ExprDict = System.Collections.Generic.Dictionary<string, expr>
+type ExprDict = Dictionary<string, expr>
 type Environment = { sym : ExprDict; prev : Environment option; }
 
-type Consumable(toks : expr list) =
-  let tokens = toks
+type Consumable(tokens : expr list) =
   let mutable index = 0
 
-  member this.consume () : expr option =
+  member this.consume () =
     if index >= tokens.Length then
       None
     else
@@ -36,13 +33,12 @@ type Consumable(toks : expr list) =
 
   member this.tell () = index
   member this.seek x =
-    if x < toks.Length then
+    if x < tokens.Length then
       index <- x
-    0
 
 let gSym = new ExprDict()
-let gSpecialForms = new Collections.Generic.Dictionary<string, (Consumable -> expr)>()
-let envstack = new Collections.Generic.Stack<Environment>()
+let gSpecialForms = new Dictionary<string, (Consumable -> expr)>()
+let envstack = new Stack<Environment>()
 let globalEnv = {sym=gSym; prev=None}
 
 let lastEnv () =
@@ -162,7 +158,7 @@ and parseOne (tc : Consumable) : expr list =
 
 and parseN (tc : Consumable) (n : int) : expr list =
   let mutable out = []
-  for i in [1..n] do
+  for i in 1..n do
     out <- out @ (parseOne tc)
   out
 

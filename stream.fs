@@ -49,9 +49,9 @@ let streamWrite (args : expr list) : expr =
         | _ -> raise (SemanticError "non-string passed to stream-write")
     | _ -> raise (SemanticError "non-stream passed to stream-write")
 
-let streamClose (args : expr list) : expr =
-  match args.[0] with
-    | StreamNode s ->
+let streamClose args =
+  match args with
+    | StreamNode s :: [] ->
       s.Close ()
       NilNode
     | _ -> raise (SemanticError "non-stream passed to stream-close")

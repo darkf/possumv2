@@ -1,0 +1,8 @@
+- Maybe separate special forms into a parsing and an evaluating section and store them in modules with a dictionary
+- Clean up hacky imperative code ("let mutable x = ...")
+- Clean up list building (use cons with List.rev instead of xs <- xs @ [...])
+- Fix expr.ToString()
+- Add basic typechecking to builtins
+- Unit testing? Maybe?
+- Functions: include, assert, lambda
+- defuns should bind locally so that you can have local nested functions (e.g. a defun iter xs ... end)

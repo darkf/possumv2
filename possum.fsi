@@ -21,7 +21,7 @@ type Consumable =
   member remaining : unit -> int
 
   member tell : unit -> int
-  member seek : int -> int
+  member seek : int -> unit
 
 val printConsumable : Consumable -> unit
 
