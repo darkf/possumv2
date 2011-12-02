@@ -26,7 +26,7 @@
     </DocumentationFile>
     <OtherFlags>
     </OtherFlags>
-    <StartArguments>stream.ps</StartArguments>
+    <StartArguments>regex.ps</StartArguments>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
     <DebugType>pdbonly</DebugType>
@@ -45,6 +45,7 @@
     <Compile Include="types.fs" />
     <Compile Include="possum.fsi" />
     <Compile Include="stream.fs" />
+    <Compile Include="text.fs" />
     <Compile Include="possum.fs" />
     <Compile Include="parser.fs" />
     <Compile Include="main.fs" />
