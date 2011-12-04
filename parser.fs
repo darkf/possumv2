@@ -25,10 +25,18 @@ let parseString (str : string) =
   let mutable inString = false
   let mutable inAtom = false
   let mutable inEscape = false
+  let mutable inComment = false
   let mutable xs = []
 
   for i in 0..str.Length-1 do
     match str.[i] with
+      | '(' when str.[i+1] = '*' && not inComment ->
+        // begin comment
+        inComment <- true
+      | ')' when str.[i-1] = '*' && inComment ->
+        // end comment
+        inComment <- false
+      | _ when inComment -> ()
       // escape codes
       | '\\' when inString = true && not inEscape -> inEscape <- true
       | 'n' | 'r' | 't' | '"' | '\\' when inEscape = true ->
