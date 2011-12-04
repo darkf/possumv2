@@ -1,0 +1,5 @@
+define st socket-open "www.google.com" 80
+stream-write st "GET / HTTP/1.0\r\n"
+stream-write st "Host: www.google.com\r\n\r\n"
+print stream-read st 64
+stream-close st

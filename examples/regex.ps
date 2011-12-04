@@ -1,0 +1,16 @@
+defun cadr xs is
+  car cdr xs
+end
+
+defun http-get url is
+  define m regex-match "\\w+://(.+)" url
+  define host cadr m
+  
+  define st socket-open host 80
+  stream-write st concat concat "GET / HTTP/1.1\r\nHost: " host "\r\n\r\n"
+  define res stream-read st 64
+  stream-close st
+  res
+end
+
+print http-get "http://www.google.com"
