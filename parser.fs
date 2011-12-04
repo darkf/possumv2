@@ -38,8 +38,8 @@ let parseString (str : string) =
         inComment <- false
       | _ when inComment -> ()
       // escape codes
-      | '\\' when inString = true && not inEscape -> inEscape <- true
-      | 'n' | 'r' | 't' | '"' | '\\' when inEscape = true ->
+      | '\\' when inString && not inEscape -> inEscape <- true
+      | 'n' | 'r' | 't' | '"' | '\\' when inEscape ->
         acc <- acc + (match str.[i] with
                         | 'n' -> "\n"
                         | 'r' -> "\r"
@@ -53,10 +53,10 @@ let parseString (str : string) =
         inString <- false
         acc <- ""
       // begin string
-      | '"' when inString = false && inAtom = false ->
+      | '"' when not inString && not inAtom->
         inString <- true
       // whitespace
-      | ' ' | '\t' | '\r' | '\n' when inString = false ->
+      | ' ' | '\t' | '\r' | '\n' when not inString ->
         if acc.Length > 0 then
           xs <- xs @ [getNode acc]
           acc <- ""
