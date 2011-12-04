@@ -140,6 +140,8 @@ and parseOne (tc : Consumable) : expr list =
           | "cond" ->
             //printfn "parse cond"
             [AtomNode "cond"] @ (parseUntil tc "end") @ [AtomNode "end"]
+          | "begin" ->
+            [AtomNode "begin"] @ (parseUntil tc "end") @ [AtomNode "end"]
           | _ ->
             raise (ParseError ("Special form isn't covered in parsing: " + s))
         else
@@ -278,13 +280,21 @@ let initSym () =
       | _ -> BoolNode false)
 
   gSpecialForms.["define"] <- _defineSF
-  gSpecialForms.["defun"] <- fun args -> NilNode // todo: shouldn't need this hack (just to fill the symtable)
+  gSpecialForms.["defun"] <- fun tc -> NilNode // todo: shouldn't need this hack (just to fill the symtable)
   gSpecialForms.["cond"] <- _condSF
+  gSpecialForms.["begin"] <- fun tc ->
+                               let rec iter r =
+                                 match tc.peek () with
+                                   | Some (AtomNode "end") -> ignore (tc.consume ()); r
+                                   | _ -> iter (evalOne tc)
+                               iter NilNode
 
   gSym.["concat"] <- FunctionNode ("concat", 2, fun args ->
     match (args.[0], args.[1]) with
       | (StringNode a, StringNode b) -> StringNode (a + b)
       | _ -> NilNode)
+
+  gSym.["tostr"] <- FunctionNode ("tostr", 1, fun args -> StringNode (exprToString args.[0]))
 
   PossumStream.initModule gSym
   PossumText.initModule gSym

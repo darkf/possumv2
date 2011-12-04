@@ -1,0 +1,18 @@
+defun foo x is
+  defun iter xs is
+    cond
+      nil? xs
+        nil
+      true
+        begin
+          print concat "item: " tostr car xs
+          iter cdr xs
+        end
+    end
+  end
+  
+  print "x: "
+  iter x
+end
+
+foo cons 1 cons 2 cons 3 cons 4 cons 5 nil
