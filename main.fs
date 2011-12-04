@@ -15,7 +15,7 @@ let main =
   else
     let tokens = parseFile args.[1] //"defun f is end print \"hi\""
     let tc = Consumable tokens
-    
+    //printConsumable tc
     initSym ()
     
     let st = parseExprs tc

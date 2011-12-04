@@ -1,4 +1,9 @@
-﻿module PossumText
+﻿// possum v2.0.0
+// copyright (c) 2011 darkf
+// licensed under the terms of the MIT license
+// see LICENSE for details
+
+module PossumText
 
 open System.Text.RegularExpressions
 open Types

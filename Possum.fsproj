@@ -44,8 +44,8 @@
   <ItemGroup>
     <Compile Include="types.fs" />
     <Compile Include="possum.fsi" />
-    <Compile Include="text.fs" />
-    <Compile Include="stream.fs" />
+    <Compile Include="lib\text.fs" />
+    <Compile Include="lib\stream.fs" />
     <Compile Include="possum.fs" />
     <Compile Include="parser.fs" />
     <Compile Include="main.fs" />
