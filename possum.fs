@@ -121,11 +121,12 @@ and parseOne (tc : Consumable) : expr list =
           | "defun" ->
             let name = (tc.consume ()).Value
             let args = parseUntil tc "is"
+            //pushNewEnv ()
             let body = parseBody tc
             
             let fn (xargs : expr list) : expr =
               pushNewEnv ()
-              for i in 0..args.Length-1 do
+              for i = 0 to args.Length-1 do
                 match args.[i] with
                   | AtomNode s -> setSymLocal s xargs.[i]
                   | _ -> raise (ParseError "argument not an atom")
@@ -135,6 +136,8 @@ and parseOne (tc : Consumable) : expr list =
               r
             
             let f = FunctionNode (name.ToString(), args.Length, fn)
+            //ignore (popEnv ())
+            //setSymLocal (name.ToString()) f
             gSym.[name.ToString()] <- f
             [f]
           | "cond" ->
@@ -294,7 +297,22 @@ let initSym () =
       | (StringNode a, StringNode b) -> StringNode (a + b)
       | _ -> NilNode)
 
-  gSym.["tostr"] <- FunctionNode ("tostr", 1, fun args -> StringNode (exprToString args.[0]))
+  gSym.["str"] <- FunctionNode ("str", 1, fun args -> StringNode (exprToString args.[0]))
+  gSym.["_printsym"] <- FunctionNode ("_printsym", 0, fun args ->
+    //for key in gSym.Keys do
+    //  printfn "  %s -> %s" key (exprToString gSym.[key])
+    let rec iter i env =
+      printfn "[%d]" i
+
+      for key in env.sym.Keys do
+        printfn "  %s -> %s" key (exprToString env.sym.[key])
+      
+      match env.prev with
+        | Some a -> iter (i + 1) a
+        | None -> ()
+      
+    iter 0 (lastEnv ())
+    NilNode)
 
   PossumStream.initModule gSym
   PossumText.initModule gSym
