@@ -306,6 +306,12 @@ let initSym () =
     match args.[0] with
       | NilNode -> BoolNode true
       | _ -> BoolNode false)
+
+  gSym.["empty?"] <- FunctionNode ("empty?", 1, fun args->
+    match args with
+      | [StringNode s] -> BoolNode (s.Length = 0)
+      | [PairNode (a,_)] -> BoolNode (exprEquals a NilNode)
+      | _ -> raise (SemanticError "non-(string|pair) passed to empty?"))
       
 
   gSpecialForms.["define"] <- _defineSF
@@ -329,6 +335,12 @@ let initSym () =
       | [StringNode str; IntegerNode start; IntegerNode len] ->
         StringNode (str.Substring(start, len))
       | _ -> raise (SemanticError "substring takes string -> int -> int"))
+  gSym.["string-length"] <- FunctionNode ("string-length", 1, fun args ->
+    match args with
+      | [StringNode str] ->
+        IntegerNode str.Length
+      | _ -> raise (SemanticError "non-string passed to string-length"))
+  
   gSym.["_printsym"] <- FunctionNode ("_printsym", 0, fun args ->
     //for key in gSym.Keys do
     //  printfn "  %s -> %s" key (exprToString gSym.[key])
