@@ -42,6 +42,12 @@ let streamReadAll (args : expr list) : expr =
       StringNode ((new IO.StreamReader(s)).ReadToEnd ())
     | _ -> raise (SemanticError "non-stream passed to stream-read-all")
 
+let streamReadLine args =
+  match args with
+    | [StreamNode s] ->
+      StringNode ((new IO.StreamReader(s)).ReadLine ())
+    | _ -> raise (SemanticError "non-stream passed to stream-read-line")
+
 let streamWrite (args : expr list) : expr =
   match args.[0] with
     | StreamNode s ->
@@ -56,7 +62,7 @@ let streamWrite (args : expr list) : expr =
 
 let streamClose args =
   match args with
-    | StreamNode s :: [] ->
+    | [StreamNode s] ->
       s.Close ()
       NilNode
     | _ -> raise (SemanticError "non-stream passed to stream-close")
@@ -68,6 +74,7 @@ let initModule (sym : ExprDict) =
 
   sym.["stream-read"] <- FunctionNode ("stream-read", 2, streamRead)
   sym.["stream-read-all"] <- FunctionNode ("stream-read-all", 1, streamReadAll)
+  sym.["stream-read-line"] <- FunctionNode ("stream-read-line", 1, streamReadLine)
   sym.["stream-read-int32"] <- FunctionNode ("stream-read-int32", 1, streamReadInt32)
 
   sym.["stream-write"] <- FunctionNode ("stream-write", 2, streamWrite)

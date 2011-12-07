@@ -45,6 +45,7 @@ Modules that should be in stdlib:
     stream-close
     stream-{read,write}
     stream-read-all
+    stream-read-line
   todo:
     stream-{read,write}-u?int{8,16,32,64}
     stream-status
