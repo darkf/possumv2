@@ -53,6 +53,9 @@ let pushEnv env =
 let popEnv () =
   envstack.Pop ()
 
+let newEnv () =
+  {sym=new ExprDict(); prev=Some (lastEnv ())}
+
 let lookup name =
   let rec iter env =
     if env.sym.ContainsKey name then
@@ -119,27 +122,7 @@ and parseOne (tc : Consumable) : expr list =
           match s with
           | "define" -> [AtomNode s] @ (parseN tc 2)
           | "defun" ->
-            let name = (tc.consume ()).Value
-            let args = parseUntil tc "is"
-            //pushNewEnv ()
-            let body = parseBody tc
-            
-            let fn (xargs : expr list) : expr =
-              pushNewEnv ()
-              for i = 0 to args.Length-1 do
-                match args.[i] with
-                  | AtomNode s -> setSymLocal s xargs.[i]
-                  | _ -> raise (ParseError "argument not an atom")
-
-              let r = evalConsumable (Consumable body)
-              ignore (popEnv ())
-              r
-            
-            let f = FunctionNode (name.ToString(), args.Length, fn)
-            //ignore (popEnv ())
-            //setSymLocal (name.ToString()) f
-            gSym.[name.ToString()] <- f
-            [f]
+            [AtomNode s] @ (parseUntil tc "end") @ [AtomNode "end"]
           | "cond" ->
             //printfn "parse cond"
             [AtomNode "cond"] @ (parseUntil tc "end") @ [AtomNode "end"]
@@ -252,8 +235,44 @@ let _condSF (tc : Consumable) : expr =
           iter ()
   iter ()
 
+let _defunSF (tc : Consumable) : expr =
+  let name = (tc.consume ()).Value
+  let args = parseUntil tc "is"
+  //pushNewEnv ()
+  let body = parseBody tc
+
+  // if we're defining this in the global scope, don't inherit anything, just push a new scope
+  // otherwise, we're in a nested closure, let's define it locally and inherit the closing scope
+  let env = (if (lastEnv ()) = globalEnv then
+               newEnv ()
+             else
+               let o = lastEnv ()
+               let e = {sym=ExprDict(); prev=Some globalEnv}
+               // clone parent
+               for key in o.sym.Keys do
+                 e.sym.[key] <- o.sym.[key]
+               e)
+  
+  let fn (xargs : expr list) : expr =
+    pushEnv env
+    for i = 0 to args.Length-1 do
+      match args.[i] with
+        | AtomNode s -> setSymLocal s xargs.[i]
+        | _ -> raise (ParseError "argument not an atom")
+
+    let r = evalConsumable (Consumable body)
+    ignore (popEnv ())
+    r
+  
+  let f = FunctionNode (name.ToString(), args.Length, fn)
+  //ignore (popEnv ())
+  setSymLocal (name.ToString()) f
+  //gSym.[name.ToString()] <- f
+  f
+
 let initSym () =
   gSym.["print"] <- FunctionNode ("print", 1, (fun args -> printfn ": %s" (exprToString args.[0]); NilNode))
+  (*
   gSym.["+"] <- FunctionNode ("+", 2, _fnPlus)
   gSym.["-"] <- FunctionNode ("-", 2, _fnMinus)
   gSym.["*"] <- FunctionNode ("*", 2, _fnMul)
@@ -281,9 +300,10 @@ let initSym () =
     match args.[0] with
       | NilNode -> BoolNode true
       | _ -> BoolNode false)
+      *)
 
   gSpecialForms.["define"] <- _defineSF
-  gSpecialForms.["defun"] <- fun tc -> NilNode // todo: shouldn't need this hack (just to fill the symtable)
+  gSpecialForms.["defun"] <- _defunSF // todo: shouldn't need this hack (just to fill the symtable)
   gSpecialForms.["cond"] <- _condSF
   gSpecialForms.["begin"] <- fun tc ->
                                let rec iter r =
@@ -302,7 +322,7 @@ let initSym () =
     //for key in gSym.Keys do
     //  printfn "  %s -> %s" key (exprToString gSym.[key])
     let rec iter i env =
-      printfn "[%d]" i
+      printfn "[%d]%s" i (if env = globalEnv then " (global)" else "")
 
       for key in env.sym.Keys do
         printfn "  %s -> %s" key (exprToString env.sym.[key])
@@ -314,8 +334,8 @@ let initSym () =
     iter 0 (lastEnv ())
     NilNode)
 
-  PossumStream.initModule gSym
-  PossumText.initModule gSym
+  //PossumStream.initModule gSym
+  //PossumText.initModule gSym
 
   pushEnv globalEnv
   ()
