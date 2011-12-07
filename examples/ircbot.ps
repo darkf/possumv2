@@ -1,0 +1,25 @@
+define s socket-open "irc.freenode.net" 6667
+print "connected"
+stream-write s "NICK foobot_\r\nUSER foobot_ 0 * :Real dicks\r\nJOIN #darkf\r\nPRIVMSG #darkf :dicks etc\r\n"
+defun iter is
+  define line stream-read-line s
+  cond
+    empty? line
+      nil
+    = substring line 0 4 "PING"
+      begin
+        print "received ping"
+        define msg substring line 5 - string-length line 5
+        print concat "msg: " msg
+        stream-write s concat "PONG :" msg
+        iter
+      end
+    true
+      begin
+        print concat "line: " line
+        iter
+      end
+    end
+end
+iter
+stream-close s
