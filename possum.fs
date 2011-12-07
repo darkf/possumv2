@@ -146,7 +146,7 @@ and parseOne (tc : Consumable) : expr list =
 
 and parseN (tc : Consumable) (n : int) : expr list =
   let mutable out = []
-  for i in 1..n do
+  for i = 1 to n do
     out <- out @ (parseOne tc)
   out
 
@@ -236,7 +236,7 @@ let _condSF (tc : Consumable) : expr =
   iter ()
 
 let _defunSF (tc : Consumable) : expr =
-  let name = (tc.consume ()).Value
+  let name = (tc.consume ()).Value.ToString()
   let args = parseUntil tc "is"
   //pushNewEnv ()
   let body = parseBody tc
@@ -264,15 +264,21 @@ let _defunSF (tc : Consumable) : expr =
     ignore (popEnv ())
     r
   
-  let f = FunctionNode (name.ToString(), args.Length, fn)
+  let f = FunctionNode (name, args.Length, fn)
+
+  // now the closure needs to know itself -- because when it inherits its parent,
+  // this closure isn't yet defined, so we need to define it.
+  // since env.sym is mutable, we can just do it now.
+  env.sym.[name] <- f
+
   //ignore (popEnv ())
-  setSymLocal (name.ToString()) f
+  setSymLocal name f
   //gSym.[name.ToString()] <- f
   f
 
 let initSym () =
   gSym.["print"] <- FunctionNode ("print", 1, (fun args -> printfn ": %s" (exprToString args.[0]); NilNode))
-  (*
+  
   gSym.["+"] <- FunctionNode ("+", 2, _fnPlus)
   gSym.["-"] <- FunctionNode ("-", 2, _fnMinus)
   gSym.["*"] <- FunctionNode ("*", 2, _fnMul)
@@ -300,7 +306,7 @@ let initSym () =
     match args.[0] with
       | NilNode -> BoolNode true
       | _ -> BoolNode false)
-      *)
+      
 
   gSpecialForms.["define"] <- _defineSF
   gSpecialForms.["defun"] <- _defunSF // todo: shouldn't need this hack (just to fill the symtable)
@@ -334,8 +340,8 @@ let initSym () =
     iter 0 (lastEnv ())
     NilNode)
 
-  //PossumStream.initModule gSym
-  //PossumText.initModule gSym
+  PossumStream.initModule gSym
+  PossumText.initModule gSym
 
   pushEnv globalEnv
   ()
