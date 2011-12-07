@@ -15,18 +15,60 @@
 - set, set-car and set-cdr
 - Unit testing? Maybe?
 - Functions: include, assert, lambda, list (special-form to create lists, e.g. list 1 2 x y 3 4 end)
-- defuns should bind locally so that you can have local nested functions (e.g. a defun iter xs ... end)
 - Fix stream-read-all for sockets
 - Rename define to something more concise (def, let, var, val, etc)
 - Tail call optimization
 - Builtins should use "match args with | [a; b; c]" syntax instead of addressing by index
 - Builtins should have a type signature as a comment (e.g. // stream-close stream -> nil)
 - High order functions should be supported (maybe an apply function)
-- Parser should support comments (# foo, until the end of the line)
-- Error handling inside possum (exceptions? return values? error flag?)
 
 Modules that should be in stdlib:
-- text (regex-match, regex-search, regex-replace, string-replace, string-reverse, string-repeat, lines, unlines, string-split string-substring string-find)
-- stream (socket-open file-open stream-close stream-{read,write}-u?int{8,16,32,64} stream-{read,write} stream-read-all stream-status socket-listen socket-accept)
-- http (http-get http-post)
-- list (ca+dr cd+r caadr list-reverse list-repeat list-length list-splice list-range list-append list-concat map zip filter reduce)
+- text
+  done:
+    regex-match
+  todo:
+    regex-search
+    regex-replace
+    string-replace
+    string-reverse
+    string-repeat
+    lines
+    unlines
+    string-split
+    string-substring
+    string-find
+
+- stream
+  done:
+    socket-open
+    file-open
+    stream-close
+    stream-{read,write}
+    stream-read-all
+  todo:
+    stream-{read,write}-u?int{8,16,32,64}
+    stream-status
+    socket-listen
+    socket-accept
+
+- http
+  todo:
+    http-get
+    http-post
+
+- list
+  todo:
+    ca+dr
+    cd+r
+    caadr
+    list-reverse
+    list-repeat
+    list-length
+    list-splice
+    list-range
+    list-append
+    list-concat
+    map
+    zip
+    filter
+    reduce
