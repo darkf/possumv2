@@ -324,6 +324,11 @@ let initSym () =
       | _ -> NilNode)
 
   gSym.["str"] <- FunctionNode ("str", 1, fun args -> StringNode (exprToString args.[0]))
+  gSym.["substring"] <- FunctionNode ("substring", 3, fun args ->
+    match args with
+      | [StringNode str; IntegerNode start; IntegerNode len] ->
+        StringNode (str.Substring(start, len))
+      | _ -> raise (SemanticError "substring takes string -> int -> int"))
   gSym.["_printsym"] <- FunctionNode ("_printsym", 0, fun args ->
     //for key in gSym.Keys do
     //  printfn "  %s -> %s" key (exprToString gSym.[key])
