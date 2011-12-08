@@ -9,12 +9,11 @@
 - For loop iterators (for expr in expr do ... end - e.g. for i in list-range 1 5 do print i end could eventually end up with list comprehension syntax like for x is * i 2 in ... end)
 - While loops
 - Maybe + on strings and lists for concatenation?
-- exprEquals should work for all primitive types
 - REPL
 - Dictionaries
-- set, set-car and set-cdr
+- set-car and set-cdr
 - Unit testing? Maybe?
-- Functions: include, assert, lambda, list (special-form to create lists, e.g. list 1 2 x y 3 4 end)
+- Functions: include, assert, lambda
 - Fix stream-read-all for sockets
 - Rename define to something more concise (def, let, var, val, etc)
 - Tail call optimization
@@ -58,16 +57,17 @@ Modules that should be in stdlib:
     http-post
 
 - list
+  done:
+    list-reverse
+    list-append
   todo:
     ca+dr
     cd+r
     caadr
-    list-reverse
     list-repeat
     list-length
     list-splice
     list-range
-    list-append
     list-concat
     map
     zip

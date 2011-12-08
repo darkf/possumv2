@@ -23,11 +23,9 @@ let main =
     try
       ignore (evalConsumable st)
     with
-      | BindingError (msg, binding) ->
-        printf "BindingError: %s" msg
-      | SemanticError msg ->
-        printf "SemanticError: %s" msg
-      | e ->
-        printf "Unhandled exception: %s" e.Message
+      | BindingError (msg, _) -> printfn "BindingError: %s" msg
+      | SemanticError msg ->     printfn "SemanticError: %s" msg
+      | ParseError msg ->        printfn "ParseError: %s" msg
+      | e ->                     printfn "Unhandled exception: %s" e.Message
 
   System.Console.ReadKey ()
