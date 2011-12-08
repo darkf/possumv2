@@ -1,0 +1,54 @@
+(* an RPN calculator
+e.g. 5 2 + 2 *
+*)
+
+define stack nil
+
+(* push a value onto the stack *)
+defun push value is
+  set stack cons value stack
+end
+
+(* pop a value off the stack *)
+defun pop is
+  define x car stack
+  set stack cdr stack
+  x
+end
+
+defun eval ops is
+  defun iter xs is
+    cond
+      nil? xs begin
+        pop (* return top of stack *)
+        end
+      = "+" car xs
+        begin
+          push + int pop int pop
+          iter cdr xs
+        end
+      = "*" car xs
+        begin
+          push * int pop int pop
+          iter cdr xs
+        end
+      true
+        begin
+          push car xs
+          iter cdr xs
+        end
+    end
+  end
+  iter ops
+end
+
+defun main is
+  defun iter is
+    define line "5 2 + 2 *" (*input-read-line*)
+    define spl string-split line " "
+    print concat "result: " str eval spl
+  end
+  iter
+end
+
+main
