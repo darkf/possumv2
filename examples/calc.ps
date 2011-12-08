@@ -41,7 +41,7 @@ end
 
 defun main is
   defun iter is
-    define line "5 2 + 2 *" (*input-read-line*)
+    define line stream-read-line stdin
     define spl string-split line " "
     print concat "result: " str eval spl
   end
