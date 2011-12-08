@@ -82,3 +82,5 @@ let initModule (sym : ExprDict) =
   sym.["rn"] <- FunctionNode ("rnrn", 0, fun args -> StringNode "\r\n")
 
   sym.["stream-close"] <- FunctionNode ("stream-close", 1, streamClose)
+
+  sym.["stdin"] <- StreamNode (Console.OpenStandardInput ())
