@@ -30,6 +30,18 @@ type ExprDict = System.Collections.Generic.Dictionary<string, expr>
 let rec exprToString e =
   match e with
     | AtomNode s -> s
+    | StringNode s -> s
+    | IntegerNode i -> string i
+    | FunctionNode (name, _, _) -> sprintf "<fn '%s'>" name
+    | BoolNode b -> if b then "true" else "false"
+    | PairNode (a, b) -> sprintf "<pair %s -> %s>" (exprToString a) (exprToString b) // todo: format list
+    | StreamNode s -> "<stream>"
+    | NilNode -> "nil"
+    //| _ -> sprintf "<<<error>>> -> %s" (string e)
+
+let exprRepr e =
+  match e with
+    | AtomNode s -> s
     | StringNode s -> sprintf "<str '%s'>" s
     | IntegerNode i -> sprintf "<int %d>" i
     | FunctionNode (name, _, _) -> sprintf "<fn '%s'>" name
@@ -37,12 +49,6 @@ let rec exprToString e =
     | PairNode (a, b) -> sprintf "<pair %s -> %s>" (exprToString a) (exprToString b)
     | StreamNode s -> "<stream>"
     | NilNode -> sprintf "<nil>"
-    //| _ -> sprintf "<<<error>>> -> %s" (string e)
-
-let exprRepr e =
-  match e with
-    | AtomNode s -> sprintf "<atom '%s'>" s
-    | _ -> exprToString e
 
 let exprToInt (e : expr) : int =
   match e with
