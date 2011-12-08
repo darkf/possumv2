@@ -1,6 +1,4 @@
-(* an RPN calculator
-e.g. 5 2 + 2 *
-*)
+(* an RPN calculator, e.g. 5 2 + 2 * equals 14 *)
 
 define stack nil
 
@@ -19,9 +17,8 @@ end
 defun eval ops is
   defun iter xs is
     cond
-      nil? xs begin
+      nil? xs
         pop (* return top of stack *)
-        end
       = "+" car xs
         begin
           push + int pop int pop
@@ -34,7 +31,7 @@ defun eval ops is
         end
       true
         begin
-          push car xs
+          push car xs (* push int onto stack *)
           iter cdr xs
         end
     end
