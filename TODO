@@ -26,6 +26,8 @@ Modules that should be in stdlib:
 - text
   done:
     regex-match
+    string-split
+    substring
   todo:
     regex-search
     regex-replace
@@ -34,8 +36,6 @@ Modules that should be in stdlib:
     string-repeat
     lines
     unlines
-    string-split
-    string-substring
     string-find
 
 - stream
