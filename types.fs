@@ -64,3 +64,14 @@ let exprEquals (x : expr) (y : expr) : bool =
     | a, b ->
       printfn "!!! warning: equals called on (%A,%A) - returning false" a b
       false
+
+let rec toPossumList (x : 'a list) : expr =
+  let rec iter (lst : 'a list) =
+    match lst with
+      | x :: [] ->
+        PairNode (x, NilNode)
+      | x :: xs ->
+        PairNode (x, (toPossumList xs))
+      | [] ->
+        NilNode
+  iter x

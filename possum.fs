@@ -128,6 +128,7 @@ and parseOne (tc : Consumable) : expr list =
             [AtomNode "cond"] @ (parseUntil tc "end") @ [AtomNode "end"]
           | "begin" ->
             [AtomNode "begin"] @ (parseUntil tc "end") @ [AtomNode "end"]
+          | "set" -> [AtomNode s] @ (parseN tc 2)
           | _ ->
             raise (ParseError ("Special form isn't covered in parsing: " + s))
         else
@@ -209,6 +210,14 @@ let _defineSF (tc : Consumable) : expr =
       setSymLocal s value
       value
     | _ -> raise (ParseError "non-atom given to define")
+
+let _setSF (tc : Consumable) =
+  match tc.consume () with
+    | Some (AtomNode s) ->
+      let value = evalOne tc
+      setSymFar s value
+      value
+    | _ -> raise (SemanticError "non-atom given to set")
 
 let _condSF (tc : Consumable) : expr =
   // cond
@@ -315,6 +324,7 @@ let initSym () =
       
 
   gSpecialForms.["define"] <- _defineSF
+  gSpecialForms.["set"] <- _setSF
   gSpecialForms.["defun"] <- _defunSF // todo: shouldn't need this hack (just to fill the symtable)
   gSpecialForms.["cond"] <- _condSF
   gSpecialForms.["begin"] <- fun tc ->
@@ -330,6 +340,11 @@ let initSym () =
       | _ -> NilNode)
 
   gSym.["str"] <- FunctionNode ("str", 1, fun args -> StringNode (exprToString args.[0]))
+  gSym.["int"] <- FunctionNode ("int", 1, fun args ->
+    match args with
+      | [IntegerNode i as x]-> x
+      | [StringNode s] -> IntegerNode (Int32.Parse s)
+      | _ -> raise (SemanticError "wrong value passed to int"))
   gSym.["substring"] <- FunctionNode ("substring", 3, fun args ->
     match args with
       | [StringNode str; IntegerNode start; IntegerNode len] ->
@@ -340,6 +355,12 @@ let initSym () =
       | [StringNode str] ->
         IntegerNode str.Length
       | _ -> raise (SemanticError "non-string passed to string-length"))
+  gSym.["string-split"] <- FunctionNode ("string-split", 2, fun args ->
+    match args with
+      | [StringNode str; StringNode delim] ->
+        let s = str.Split([| delim |], StringSplitOptions.None)
+        toPossumList (List.init s.Length (fun i -> StringNode s.[i]))
+      | _ -> raise (SemanticError "non-string given to string-split"))
   
   gSym.["_printsym"] <- FunctionNode ("_printsym", 0, fun args ->
     //for key in gSym.Keys do
