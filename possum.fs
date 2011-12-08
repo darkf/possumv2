@@ -126,6 +126,17 @@ and parseOne (tc : Consumable) : expr list =
           | "begin" ->  [AtomNode "begin"] @ (parseUntil tc "end") @ [AtomNode "end"]
           | "list" ->   [AtomNode "list"] @ (parseUntil tc "end") @ [AtomNode "end"]
           | "set" ->    [AtomNode s] @ (parseN tc 2)
+          | "if" ->
+            let cond = parseOne tc
+            let then1 = parseOne tc
+            match tc.peek () with
+              | Some (AtomNode "else") ->
+                ignore (tc.consume ());
+                let then2 = parseOne tc
+                [AtomNode "if"] @ cond @ then1 @ [AtomNode "else"] @ then2
+              | _ ->
+                [AtomNode "if"] @ cond @ then1
+                
           | _ -> raise (ParseError ("Special form isn't covered in parsing: " + s))
         else
           match lookup s with
@@ -336,6 +347,21 @@ let initSym () =
                                   | Some a -> printfn "list: %s" (exprToString a); iter (PairNode (a, xs))
                                   | None -> raise (ParseError "expected end, not EOF")
                               possumListReverse (iter NilNode)
+  gSpecialForms.["if"] <- fun tc ->
+                            let cond = exprToBool (evalOne tc)
+                            let then1 = parseOne tc
+
+                            match tc.peek () with
+                              | Some (AtomNode "else") ->
+                                ignore (tc.consume ()); // consume else
+                                if cond then
+                                  let r = evalConsumable (Consumable then1)
+                                  ignore (parseOne tc) // consume else part
+                                  r
+                                else
+                                  evalOne tc
+                              | _ ->
+                                if cond then evalConsumable (Consumable then1) else NilNode
 
   gSym.["concat"] <- FunctionNode ("concat", 2, fun args ->
     match args with
