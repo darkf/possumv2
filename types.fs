@@ -71,8 +71,8 @@ let exprEquals (x : expr) (y : expr) : bool =
       printfn "!!! warning: equals called on (%A,%A) - returning false" a b
       false
 
-let rec toPossumList (x : 'a list) : expr =
-  let rec iter (lst : 'a list) =
+let rec toPossumList (x : expr list) : expr =
+  let rec iter (lst : expr list) =
     match lst with
       | x :: [] ->
         PairNode (x, NilNode)
@@ -81,3 +81,15 @@ let rec toPossumList (x : 'a list) : expr =
       | [] ->
         NilNode
   iter x
+
+let rec possumListAppend l m =
+  match l with
+    | NilNode -> m
+    | PairNode (x, xs) -> PairNode (x, (possumListAppend xs m))
+    | _ -> raise (SemanticError "possumListAppend")
+
+let rec possumListReverse (lst : expr) : expr =
+  match lst with
+    | NilNode -> NilNode
+    | PairNode (x, xs) -> possumListAppend (possumListReverse xs) (PairNode (x, NilNode))
+    | _ -> raise (SemanticError "possumListReverse")

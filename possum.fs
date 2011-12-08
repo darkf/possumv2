@@ -121,16 +121,12 @@ and parseOne (tc : Consumable) : expr list =
         if gSpecialForms.ContainsKey s then
           match s with
           | "define" -> [AtomNode s] @ (parseN tc 2)
-          | "defun" ->
-            [AtomNode s] @ (parseUntil tc "end") @ [AtomNode "end"]
-          | "cond" ->
-            //printfn "parse cond"
-            [AtomNode "cond"] @ (parseUntil tc "end") @ [AtomNode "end"]
-          | "begin" ->
-            [AtomNode "begin"] @ (parseUntil tc "end") @ [AtomNode "end"]
-          | "set" -> [AtomNode s] @ (parseN tc 2)
-          | _ ->
-            raise (ParseError ("Special form isn't covered in parsing: " + s))
+          | "defun" ->  [AtomNode s] @ (parseUntil tc "end") @ [AtomNode "end"]
+          | "cond" ->   [AtomNode "cond"] @ (parseUntil tc "end") @ [AtomNode "end"]
+          | "begin" ->  [AtomNode "begin"] @ (parseUntil tc "end") @ [AtomNode "end"]
+          | "list" ->   [AtomNode "list"] @ (parseUntil tc "end") @ [AtomNode "end"]
+          | "set" ->    [AtomNode s] @ (parseN tc 2)
+          | _ -> raise (ParseError ("Special form isn't covered in parsing: " + s))
         else
           match lookup s with
             Some (FunctionNode (name, arity, fn)) ->
@@ -333,11 +329,23 @@ let initSym () =
                                    | Some (AtomNode "end") -> ignore (tc.consume ()); r
                                    | _ -> iter (evalOne tc)
                                iter NilNode
+  gSpecialForms.["list"] <- fun tc ->
+                              let rec iter (xs : expr) =
+                                match tc.consume () with
+                                  | Some (AtomNode "end") -> xs
+                                  | Some a -> printfn "list: %s" (exprToString a); iter (PairNode (a, xs))
+                                  | None -> raise (ParseError "expected end, not EOF")
+                              possumListReverse (iter NilNode)
 
   gSym.["concat"] <- FunctionNode ("concat", 2, fun args ->
-    match (args.[0], args.[1]) with
-      | (StringNode a, StringNode b) -> StringNode (a + b)
-      | _ -> NilNode)
+    match args with
+      | [a; b] -> StringNode ((exprToString a) + (exprToString b))
+      | _ -> raise (SemanticError "wrong args to concat"))
+
+  gSym.["list-reverse"] <- FunctionNode ("list-reverse", 1, fun args ->
+    match args with
+      | [PairNode (_,_) as a] -> possumListReverse a
+      | _ -> raise (SemanticError "non-list passed to list-reverse"))
 
   gSym.["str"] <- FunctionNode ("str", 1, fun args -> StringNode (exprToString args.[0]))
   gSym.["int"] <- FunctionNode ("int", 1, fun args ->
