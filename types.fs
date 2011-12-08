@@ -41,7 +41,7 @@ let rec exprToString e =
 
 let exprRepr e =
   match e with
-    | AtomNode s -> s
+    | AtomNode s -> sprintf "<atom '%s'>" s
     | StringNode s -> sprintf "<str '%s'>" s
     | IntegerNode i -> sprintf "<int %d>" i
     | FunctionNode (name, _, _) -> sprintf "<fn '%s'>" name
