@@ -67,6 +67,13 @@ let streamClose args =
       NilNode
     | _ -> raise (SemanticError "non-stream passed to stream-close")
 
+let streamFlush args =
+  match args with
+    | [StreamNode s] ->
+      s.Flush ()
+      NilNode
+    | _ -> raise (SemanticError "non-stream passed to stream-flush")
+
 let initModule (sym : ExprDict) =
   sym.["file-open"] <- FunctionNode ("file-open", 1, fileOpen)
 
@@ -82,5 +89,8 @@ let initModule (sym : ExprDict) =
   sym.["rn"] <- FunctionNode ("rnrn", 0, fun args -> StringNode "\r\n")
 
   sym.["stream-close"] <- FunctionNode ("stream-close", 1, streamClose)
+  sym.["stream-flush"] <- FunctionNode ("stream-flush", 1, streamFlush)
 
   sym.["stdin"] <- StreamNode (Console.OpenStandardInput ())
+  sym.["stderr"] <- StreamNode (Console.OpenStandardError ())
+  sym.["stdout"] <- StreamNode (Console.OpenStandardOutput ())
