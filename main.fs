@@ -7,6 +7,7 @@ module Main
 
 open Possum
 open Parser
+open Types
 
 let main =
   let args = System.Environment.GetCommandLineArgs ()
@@ -19,6 +20,14 @@ let main =
     initSym ()
     
     let st = parseExprs tc
-    ignore (evalConsumable st)
+    try
+      ignore (evalConsumable st)
+    with
+      | BindingError (msg, binding) ->
+        printf "BindingError: %s" msg
+      | SemanticError msg ->
+        printf "SemanticError: %s" msg
+      | e ->
+        printf "Unhandled exception: %s" e.Message
 
   System.Console.ReadKey ()
