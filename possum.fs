@@ -373,6 +373,11 @@ let initSym () =
       | [PairNode (_,_) as a] -> possumListReverse a
       | _ -> raise (SemanticError "non-list passed to list-reverse"))
 
+  gSym.["not"] <- FunctionNode ("not", 1, fun args ->
+    match args with
+      | [BoolNode b] -> BoolNode (not b)
+      | _ -> raise (SemanticError "non-bool passed to not"))
+
   gSym.["str"] <- FunctionNode ("str", 1, fun args -> StringNode (exprToString args.[0]))
   gSym.["int"] <- FunctionNode ("int", 1, fun args ->
     match args with

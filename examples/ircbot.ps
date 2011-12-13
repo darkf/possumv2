@@ -2,15 +2,6 @@ define s socket-open "irc.freenode.net" 6667
 print "connected"
 stream-write s "NICK foobot_\r\nUSER foobot_ 0 * :Real dicks\r\nJOIN #darkf\r\nPRIVMSG #darkf :dicks etc\r\n"
 
-defun not x is
-  cond
-    = x true
-      false
-    true
-      true
-  end
-end
-
 defun iter is
   define line stream-read-line s
   define m0 regex-match ":([a-zA-Z0-9_-`~!@/]+) PRIVMSG (#[a-zA-Z_-]+) :(.*)" line
