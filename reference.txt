@@ -1,0 +1,141 @@
+============================
+Possum 2 functions reference
+============================
+
+Built-ins
+---------
+
+  + <a> <b>, - <a> <b>, / <a> <b>, * <a> <b>
+arithmetic
+
+  = <a> <b>
+equality comparison, i.e., returns boolean true/false
+according as <a> is equal/not equal to <b>
+
+  begin <expr1> <expr2> ... <exprN> end
+evaluates <expr1>, <expr2>, ..., <exprN> in the same
+scope it is called in.
+
+  car <a>
+returns the head of pair <a>
+
+  cdr <a>
+returns the tail of pair <a>
+
+  concat <a> <b>
+returns the concatenation of strings <a>, <b>
+
+  cond <cond1> <expr1> <cond2> <expr2> ... <condN> <exprN> end
+evaluates <exprN> only for the smallest N such that <condN> is true.
+
+  cons <a> <b>
+construct a pair (<a>,<b>)
+
+  define <a> <b>
+defines <a> as <b> in the local scope
+
+  defun <name> <arg1> <arg2> ... <argN> is <expr> end
+defines a function <name> with arguments <arg1>, 
+<arg2>, ..., <argN> and body <expr>. the calling syntax is
+<name> <arg1> <arg2> ... <argN>. pitfall: in source code, 
+function definitions must appear before calls.
+
+  empty? <a>
+returns a boolean true/false according as <a> is/is not an
+empty string or list
+
+  if <cond> <expr1> [else <expr2>]
+evaluates <expr1> if <cond> is true; optionally evaluates
+<expr2> if <cond> is false
+
+  int <a>
+parses an integer value in string <a>
+
+  list <1> <2> ... <n> end
+constructs a list with members <1>, <2>, ... <n>. notice
+that lists are made by nesting pairs.
+
+  nil? <a>
+returns a boolean true/false according as <a> is/is not nil
+
+  not <a>
+returns boolean not of <a>
+
+  pair? <a>
+returns a boolean true/false according as <a> is/is not a pair
+
+  print <expr>
+print raw string representation of <expr>
+
+  set <a> <b>
+defines <a> as <b> in the closest scope <a> is
+already defined in
+
+  str <a>
+returns raw string representation of <a>
+
+  string-length <str>
+returns the number of characters in string <str>
+
+  string-split <str> <sep>
+returns a list of substrings of <str> separated by
+string <sep>, e.g.
+	string-split "1,2,3" ","
+evaluates to
+	<pair 1 -> <pair 2 -> <pair 3 -> nil>>>
+
+  substring <str> <a> <b>
+creates a substring from zero-indexed characters <a>..<b> 
+in string <str>
+ 
+
+Stream library
+--------------
+
+  file-open <path>
+returns stream from file at path <path>
+
+  socket-open <host> <port>
+returns stream from socket connection to
+<host> using <port>
+
+  stderr
+literal: standard error stream
+
+  stdin
+literal: standard input stream
+
+  stdout
+literal: standard output stream
+
+  stream-close <stream>
+closes <stream>
+
+  stream-flush <stream>
+flushes <stream>
+
+  stream-read <stream> <size>
+reads a buffer of size <size> from <stream>
+
+  stream-read-all <stream>
+reads <stream> until it ends
+
+  stream-read-int32 <stream>
+reads a token from <stream> and parses it as a 32-bit integer
+
+  stream-read-line <stream>
+reads one line from <stream>
+
+  stream-write <stream> <str>
+writes <str> to <stream>
+
+
+Text library
+------------
+
+ regex-match <regex-pattern> <string>
+matches <regex-pattern> in <string>. a list
+of captures is returned whose head is the
+entire match and whose subsequent items are
+the individual captures
+
