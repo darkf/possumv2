@@ -1,0 +1,43 @@
+(* The at function takes a list and a zero-based index
+   and returns the item corresponding to it, if any. *)
+   
+(* Here's one implementation. it counts down from i, all the way to 0,
+   and when it gets there it returns the head. until then, it recurses
+   while decrementing i.
+   
+   This implementation has the flaw that when you use an out-of-bounds index,
+   for example 10 on a list with only 3 items, it will error because you end up
+   passing an empty list to cdr.
+*)
+
+defun at lst i is
+  if = i 0 (* check if i is zero (our ending case) *)
+    car lst (* if our index was hit, return the head (first item) *)
+  else
+    at cdr lst - i 1 (* otherwise recurse with the tail and decrement i *)
+end
+
+define l list "one" 2 3 4 end
+
+print concat "0: " at l 0
+print concat "1: " at l 1
+print concat "2: " at l 2
+(*print concat "10: " at l 10*) (* crashes *)
+print ""
+
+(* So let's try that again, this time adding a case for empty lists (nil) *)
+
+defun at lst i is
+  if = i 0
+    car lst
+  else
+    if nil? cdr lst
+      nil
+    else
+      at cdr lst - i 1
+end
+
+print concat "0: " at l 0
+print concat "1: " at l 1
+print concat "2: " at l 2
+print concat "10: " at l 10
