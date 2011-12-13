@@ -40,16 +40,16 @@ defun iter is
 
        (* If we didn't get a quit command, tail-recurse to continue listening *)
         if not = message "quit"
-        iter
+          iter
       end
 
     (* Otherwise, log any other lines sent by the server,
        and tail-recurse to keep listening *)
     true
-    begin
-      print concat "line: " line
-      iter
-    end
+      begin
+        print concat "line: " line
+        iter
+      end
   end
 
 end
