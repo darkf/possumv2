@@ -4,7 +4,6 @@
 - Fix expr.ToString()
 - Add basic typechecking to builtins
 - Structs? (just scheme-like; defstruct foo is x y end define bar new foo foo-set-x bar 5 print foo-x bar)
-- if special form (ternary-like: if cond then yes else no)
 - s?printf (how to implement this with fixed arity? lists or special form that parses the format string?)
 - For loop iterators (for expr in expr do ... end - e.g. for i in list-range 1 5 do print i end could eventually end up with list comprehension syntax like for x is * i 2 in ... end)
 - While loops
