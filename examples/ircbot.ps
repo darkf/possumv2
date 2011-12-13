@@ -1,50 +1,57 @@
+(* Feel free to change the server, channel, etc. *)
 define s socket-open "irc.freenode.net" 6667
 print "connected"
-stream-write s "NICK foobot_\r\nUSER foobot_ 0 * :Real dicks\r\nJOIN #darkf\r\nPRIVMSG #darkf :dicks etc\r\n"
+stream-write s "NICK foobot_\r\nUSER foobot_ 0 * :ircbot.ps\r\nJOIN #botwar\r\nPRIVMSG #botwar :hello world\r\n"
 
 defun iter is
   define line stream-read-line s
+
+  (* Match lines containing messages.
+     The first pattern is the sender's name,
+     the second is the channel name and the third
+     is the contents of the message *)
   define m0 regex-match ":([a-zA-Z0-9_-`~!@/]+) PRIVMSG (#[a-zA-Z_-]+) :(.*)" line
+
+  (* If we matched a message, parse it and check for bot commands *)
   cond
-    empty? line
-      nil
-    (*= substring line 0 4 "PING"
-      begin
-        print "received ping"
-        define msg substring line 5 - string-length line 5
-        print concat "msg: " msg
-        stream-write s concat "PONG :" msg
-        iter
-      end*)
     not nil? m0
       begin
         print "matched privmsg"
         print m0
+
+        (* Extract the members of the matched patterns list *)
         define user car cdr m0
-        define chan car cdr cdr m0
+        define chan car cdr cdr m0		
         define message car cdr cdr cdr m0
         print concat "user: " user
         print concat "chan: " chan
         print concat "message: " message
+
+        (* Implement bot commands *)
         cond
           = message "hi"
-            stream-write s concat concat "PRIVMSG #darkf :sup, " chan "\r\n"
+            stream-write s concat concat "PRIVMSG #botwar :sup, " chan "\r\n"
           = message "quit"
             begin
               stream-write s "QUIT\r\n"
               stream-close s
             end
-          true
-            nil
         end
-        iter
+
+       (* If we didn't get a quit command, tail-recurse to continue listening *)
+        if not = message "quit"
+	  iter
       end
+
+    (* Otherwise, log any other lines sent by the server,
+	 and tail-recurse to keep listening *)
     true
-      begin
-        print concat "line: " line
-        iter
-      end
+    begin
+      print concat "line: " line
+      iter
     end
+  end
+
 end
+
 iter
-stream-close s
