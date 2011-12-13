@@ -1,10 +1,18 @@
 defun fact n is
+  if = n 0
+    1
+  else
+    * n fact - n 1
+end
+
+(* or with cond: *)
+(*defun fact n is
   cond
     = n 0
       1
     true
       * n fact - n 1
   end
-end
+end*)
 
 print fact 10
