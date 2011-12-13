@@ -344,7 +344,7 @@ let initSym () =
                               let rec iter (xs : expr) =
                                 match tc.consume () with
                                   | Some (AtomNode "end") -> xs
-                                  | Some a -> printfn "list: %s" (exprToString a); iter (PairNode (a, xs))
+                                  | Some a -> iter (PairNode (a, xs))
                                   | None -> raise (ParseError "expected end, not EOF")
                               possumListReverse (iter NilNode)
   gSpecialForms.["if"] <- fun tc ->
