@@ -14,6 +14,9 @@ defun iter is
 
   (* If we matched a message, parse it and check for bot commands *)
   cond
+    empty? line
+      nil        (* dead connection, stop recursing *)
+
     not nil? m0
       begin
         print "matched privmsg"
