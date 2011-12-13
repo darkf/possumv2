@@ -65,13 +65,14 @@ returns boolean not of <a>
 returns a boolean true/false according as <a> is/is not a pair
 
   print <expr>
-print string representation of <expr>
+print raw string representation of <expr>
 
   set <a> <b>
-defines <a> as <b> in the global scope
+defines <a> as <b> in the closest scope <a> is
+already defined in
 
   str <a>
-returns string representation of <a>
+returns raw string representation of <a>
 
   string-length <str>
 returns the number of characters in string <str>
@@ -133,4 +134,8 @@ Text library
 ------------
 
  regex-match <regex-pattern> <string>
-matches <regex-pattern> in <string>
+matches <regex-pattern> in <string>. a list
+of captures is returned whose head is the
+entire match and whose subsequent items are
+the individual captures
+
