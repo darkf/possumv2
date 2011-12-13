@@ -1,6 +1,7 @@
+(* Feel free to change the server, channel, etc. *)
 define s socket-open "irc.freenode.net" 6667
 print "connected"
-stream-write s "NICK foobot_\r\nUSER foobot_ 0 * :Real dicks\r\nJOIN #darkf\r\nPRIVMSG #darkf :dicks etc\r\n"
+stream-write s "NICK foobot_\r\nUSER foobot_ 0 * :ircbot.ps\r\nJOIN #botwar\r\nPRIVMSG #botwar :hello world\r\n"
 
 defun iter is
   define line stream-read-line s
@@ -29,7 +30,7 @@ defun iter is
         (* Implement bot commands *)
         cond
           = message "hi"
-            stream-write s concat concat "PRIVMSG #darkf :sup, " chan "\r\n"
+            stream-write s concat concat "PRIVMSG #botwar :sup, " chan "\r\n"
           = message "quit"
             begin
               stream-write s "QUIT\r\n"
