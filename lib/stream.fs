@@ -26,7 +26,7 @@ let streamReadInt32 (args : expr list) : expr =
       IntegerNode ((new IO.BinaryReader(s)).ReadInt32 ())
     | _ -> raise (SemanticError "non-stream passed to stream-read-int32")
 
-let streamRead (args : expr list) : expr =
+let streamReadBytes (args : expr list) : expr =
   match args.[0] with
     | StreamNode s ->
       let n = exprToInt args.[1]
@@ -34,6 +34,16 @@ let streamRead (args : expr list) : expr =
       match s.Read(buf, 0, n) with
         | 0 -> NilNode // EOF
         | _ -> StringNode (Text.Encoding.UTF8.GetString(buf, 0, n))
+    | _ -> raise (SemanticError "non-stream passed to stream-read-bytes")
+
+let streamRead args =
+  match args with
+    | [StreamNode s; IntegerNode n] ->
+      let buf : char[] = Array.zeroCreate n
+      let x = (new IO.StreamReader(s))
+      match x.Read(buf, 0, n) with
+        | 0 -> NilNode // EOF
+        | _ -> StringNode (new string(buf))
     | _ -> raise (SemanticError "non-stream passed to stream-read")
 
 let streamReadAll (args : expr list) : expr =
@@ -80,6 +90,7 @@ let initModule (sym : ExprDict) =
   sym.["socket-open"] <- FunctionNode ("socket-open", 2, socketOpen)
 
   sym.["stream-read"] <- FunctionNode ("stream-read", 2, streamRead)
+  sym.["stream-read-bytes"] <- FunctionNode ("stream-read", 2, streamReadBytes)
   sym.["stream-read-all"] <- FunctionNode ("stream-read-all", 1, streamReadAll)
   sym.["stream-read-line"] <- FunctionNode ("stream-read-line", 1, streamReadLine)
   sym.["stream-read-int32"] <- FunctionNode ("stream-read-int32", 1, streamReadInt32)
