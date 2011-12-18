@@ -373,6 +373,24 @@ let initSym () =
       | [PairNode (_,_) as a] -> possumListReverse a
       | _ -> raise (SemanticError "non-list passed to list-reverse"))
 
+  gSym.["at"] <- FunctionNode ("at", 2, fun args ->
+    match args with
+      | [PairNode (_,_) as a; IntegerNode index] ->
+        let rec iter l i =
+          match l with
+            | PairNode (a, NilNode) ->
+              if i = index then a
+              else NilNode
+            | PairNode (a, b) ->
+              if i = index then a
+              else iter b (i + 1)
+            | _ -> raise (SemanticError "non-pair in at")
+        iter a 0
+      | [StringNode s; IntegerNode index] ->
+        if s.Length < index then NilNode
+        else (StringNode (string s.[index]))
+      | _ -> raise (SemanticError "non-string/list passed to at"))
+
   gSym.["not"] <- FunctionNode ("not", 1, fun args ->
     match args with
       | [BoolNode b] -> BoolNode (not b)
