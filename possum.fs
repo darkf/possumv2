@@ -391,6 +391,21 @@ let initSym () =
         else (StringNode (string s.[index]))
       | _ -> raise (SemanticError "non-string/list passed to at"))
 
+  gSym.["with-set-at"] <- FunctionNode ("set-at", 3, fun args ->
+    match args with
+      | [PairNode (a, b) as p; IntegerNode index; value] ->
+        let rec iter l i xs =
+          match l with
+            | PairNode (a, NilNode) ->
+              a :: xs
+            | PairNode (h, j) ->
+              if i = index then
+                iter j (i + 1) (value :: xs)
+              else
+                iter j (i + 1) (h :: xs)
+        toPossumList (List.rev (iter p 0 []))
+      | _ -> raise (SemanticError "wrong args to with-set-at"))
+
   gSym.["not"] <- FunctionNode ("not", 1, fun args ->
     match args with
       | [BoolNode b] -> BoolNode (not b)
