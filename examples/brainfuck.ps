@@ -6,7 +6,7 @@
 define tape nil
 define PC 0
 
-(* todo: implement -, <, >, and [] loops *)
+(* todo: implement [] loops *)
 
 defun eval p i is
   define c at p i (* current char *)
@@ -14,8 +14,16 @@ defun eval p i is
   cond
     = c "+"
       set tape with-set-at tape PC + at tape PC 1 (* increment tape[PC] by 1 *)
+    = c "-"
+      set tape with-set-at tape PC - at tape PC 1 (* decrement tape[PC] by 1 *)
     = c "."
       print at tape PC
+    = c ","
+      set tape with-set-at tape PC stream-read stdin 1
+    = c ">"
+      set PC + PC 1
+    = c "<"
+      set PC - PC 1
   end
   
   if not = i - string-length p 1
