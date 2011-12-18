@@ -90,7 +90,7 @@ let initModule (sym : ExprDict) =
   sym.["socket-open"] <- FunctionNode ("socket-open", 2, socketOpen)
 
   sym.["stream-read"] <- FunctionNode ("stream-read", 2, streamRead)
-  sym.["stream-read-bytes"] <- FunctionNode ("stream-read", 2, streamReadBytes)
+  sym.["stream-read-bytes"] <- FunctionNode ("stream-read-bytes", 2, streamReadBytes)
   sym.["stream-read-all"] <- FunctionNode ("stream-read-all", 1, streamReadAll)
   sym.["stream-read-line"] <- FunctionNode ("stream-read-line", 1, streamReadLine)
   sym.["stream-read-int32"] <- FunctionNode ("stream-read-int32", 1, streamReadInt32)
