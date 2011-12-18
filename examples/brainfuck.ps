@@ -1,0 +1,38 @@
+(* A Brainfuck interpreter in possum.
+   Brainfuck programs resemble turing machines in that they are sets of operations
+   on a (finite) tape.
+*)
+
+define tape nil
+define PC 0
+
+(* todo: implement -, <, >, and [] loops *)
+
+defun eval p i is
+  define c at p i (* current char *)
+  
+  cond
+    = c "+"
+      set tape with-set-at tape PC + at tape PC 1 (* increment tape[PC] by 1 *)
+    = c "."
+      print at tape PC
+  end
+  
+  if not = i - string-length p 1
+    eval p + i 1
+end
+  
+
+define prog "++++++++++++++++++++++++++++++++++++++++."
+
+(* set tape to 128 zeros *)
+defun _titer i is
+  if not = i 128
+    begin
+      set tape cons 0 tape
+      _titer + i 1
+    end
+end
+_titer 0
+
+eval prog 0
