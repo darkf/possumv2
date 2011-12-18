@@ -12,6 +12,9 @@ arithmetic
 equality comparison, i.e., returns boolean true/false
 according as <a> is equal/not equal to <b>
 
+  at <list> <index>
+returns zero-indexed member <index> of <list>
+
   begin <expr1> <expr2> ... <exprN> end
 evaluates <expr1>, <expr2>, ..., <exprN> in the same
 scope it is called in.
