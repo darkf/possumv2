@@ -8,7 +8,6 @@
 - For loop iterators (for expr in expr do ... end - e.g. for i in list-range 1 5 do print i end could eventually end up with list comprehension syntax like for x is * i 2 in ... end)
 - While loops
 - Maybe + on strings and lists for concatenation?
-- REPL
 - Dictionaries
 - set-car and set-cdr
 - Unit testing? Maybe?
