@@ -12,7 +12,24 @@ open Types
 let main =
   let args = System.Environment.GetCommandLineArgs ()
   if args.Length < 2 then
-    printfn "usage: %s FILE" args.[0]
+    // REPL mode
+    initSym ()
+    
+    let mutable cont = true
+    while cont do
+      try
+        printf ">> "
+        let input = System.Console.ReadLine ()
+        match input with
+          | ":q" | ":quit" | ":exit" -> cont <- false
+          | _ ->
+            let r = evalConsumable (Consumable (parseString input))
+            printfn "%s" (exprRepr r)
+      with
+        | BindingError (msg, _) -> printfn "BindingError: %s" msg
+        | SemanticError msg ->     printfn "SemanticError: %s" msg
+        | ParseError msg ->        printfn "ParseError: %s" msg
+        | e ->                     printfn "Unhandled exception: %s" e.Message
   else
     let tokens = parseFile args.[1] //"defun f is end print \"hi\""
     let tc = Consumable tokens
@@ -28,4 +45,4 @@ let main =
       | ParseError msg ->        printfn "ParseError: %s" msg
       | e ->                     printfn "Unhandled exception: %s" e.Message
 
-  System.Console.ReadKey ()
+    ignore (System.Console.ReadKey ())
