@@ -67,6 +67,9 @@ let lookup name =
 
   iter (lastEnv ())
 
+(* investigate: this function doesn't seem to
+   create a local binding when `name` doesn't already exist.
+   bug or feature? *)
 let setSymFar name value =
   let rec iter env =
     if env.sym.ContainsKey name then
@@ -433,6 +436,13 @@ let initSym () =
         let s = str.Split([| delim |], StringSplitOptions.None)
         toPossumList (List.init s.Length (fun i -> StringNode s.[i]))
       | _ -> raise (SemanticError "non-string given to string-split"))
+
+  gSym.["set-symbol"] <- FunctionNode ("set-symbol", 2, fun args ->
+    match args with
+      | [StringNode a; b] ->
+        setSymLocal a b
+        b
+      | _ -> raise (SemanticError "invalid args to set-symbol"))
   
   gSym.["_printsym"] <- FunctionNode ("_printsym", 0, fun args ->
     //for key in gSym.Keys do
