@@ -122,9 +122,9 @@ and parseOne (tc : Consumable) : expr list =
           match s with
           | "define" -> [AtomNode s] @ (parseN tc 2)
           | "defun" ->  [AtomNode s] @ (parseUntil tc "end") @ [AtomNode "end"]
-          | "cond" ->   [AtomNode "cond"] @ (parseUntil tc "end") @ [AtomNode "end"]
-          | "begin" ->  [AtomNode "begin"] @ (parseUntil tc "end") @ [AtomNode "end"]
-          | "list" ->   [AtomNode "list"] @ (parseUntil tc "end") @ [AtomNode "end"]
+          | "cond" ->   [AtomNode s] @ (parseUntil tc "end") @ [AtomNode "end"]
+          | "begin" ->  [AtomNode s] @ (parseUntil tc "end") @ [AtomNode "end"]
+          | "list" ->   [AtomNode s] @ (parseUntil tc "end") @ [AtomNode "end"]
           | "set" ->    [AtomNode s] @ (parseN tc 2)
           | "if" ->
             let cond = parseOne tc
