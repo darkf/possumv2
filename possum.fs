@@ -67,9 +67,6 @@ let lookup name =
 
   iter (lastEnv ())
 
-(* investigate: this function doesn't seem to
-   create a local binding when `name` doesn't already exist.
-   bug or feature? *)
 let setSymFar name value =
   let rec iter env =
     if env.sym.ContainsKey name then
@@ -78,7 +75,9 @@ let setSymFar name value =
       // look into the upper scopes
       match env.prev with
         | Some a -> iter a
-        | None -> ()
+        | None ->
+          (* we're at the upper-most scope, and we can't find it. set it here *)
+          env.sym.[name] <- value
 
   iter (lastEnv ())
 
