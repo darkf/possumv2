@@ -128,6 +128,7 @@ and parseOne (tc : Consumable) : expr list =
           | "begin" ->  [AtomNode s] @ (parseUntil tc "end") @ [AtomNode "end"]
           | "list" ->   [AtomNode s] @ (parseUntil tc "end") @ [AtomNode "end"]
           | "set" ->    [AtomNode s] @ (parseN tc 2)
+          | "ref" ->    [AtomNode s; (tc.consume ()).Value]
           | "if" ->
             let cond = parseOne tc
             let then1 = parseOne tc
@@ -365,6 +366,16 @@ let initSym () =
                               | _ ->
                                 if cond then evalConsumable (Consumable then1) else NilNode
 
+  gSpecialForms.["ref"] <- fun tc ->
+    match tc.consume () with
+      | Some (AtomNode a as e) ->
+        match (lookup a) with
+          | Some (FunctionNode (_, _, _) as f) -> f
+          | Some _ -> e
+          | None -> e
+      | Some a -> raise (SemanticError "cannot ref non-atoms")
+      | None -> raise (ParseError "nothing to ref")
+
   gSym.["concat"] <- FunctionNode ("concat", 2, fun args ->
     match args with
       | [a; b] -> StringNode ((exprToString a) + (exprToString b))
@@ -442,6 +453,13 @@ let initSym () =
         setSymLocal a b
         b
       | _ -> raise (SemanticError "invalid args to set-symbol"))
+
+  gSym.["set-global-symbol"] <- FunctionNode ("set-global-symbol", 2, fun args ->
+    match args with
+      | [StringNode a; b] ->
+        gSym.[a] <- b
+        b
+      | _ -> raise (SemanticError "invalid args to set-global-symbol"))
   
   gSym.["_printsym"] <- FunctionNode ("_printsym", 0, fun args ->
     //for key in gSym.Keys do
