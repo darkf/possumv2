@@ -1,5 +1,5 @@
 ﻿// possum v2.0.0
-// copyright (c) 2011 darkf
+// copyright (c) 2011-2012 darkf
 // licensed under the terms of the MIT license
 // see LICENSE for details
 
