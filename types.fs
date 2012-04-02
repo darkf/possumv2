@@ -11,6 +11,7 @@ type expr = AtomNode of string
           | IntegerNode of int
           | FunctionNode of string * int * (expr list -> expr)
           | StreamNode of System.IO.Stream
+          | StructNode of ExprDict
           | PairNode of expr * expr
           | BoolNode of bool
           | NilNode
@@ -21,11 +22,11 @@ type expr = AtomNode of string
               | AtomNode s -> s
               | _ -> "fixme"
 
+and ExprDict = System.Collections.Generic.Dictionary<string, expr>
+
 exception ParseError of string
 exception BindingError of string * string
 exception SemanticError of string
-
-type ExprDict = System.Collections.Generic.Dictionary<string, expr>
 
 let rec exprToString e =
   match e with
@@ -36,6 +37,7 @@ let rec exprToString e =
     | BoolNode b -> if b then "true" else "false"
     | PairNode (a, b) -> sprintf "<pair %s -> %s>" (exprToString a) (exprToString b) // todo: format list
     | StreamNode s -> "<stream>"
+    | StructNode s -> "<struct>"
     | NilNode -> "nil"
     //| _ -> sprintf "<<<error>>> -> %s" (string e)
 
@@ -48,6 +50,7 @@ let exprRepr e =
     | BoolNode b -> sprintf "<bool %s>" (if b then "true" else "false")
     | PairNode (a, b) -> sprintf "<pair %s -> %s>" (exprToString a) (exprToString b)
     | StreamNode s -> "<stream>"
+    | StructNode s -> "<struct>"
     | NilNode -> sprintf "<nil>"
 
 let exprToInt (e : expr) : int =

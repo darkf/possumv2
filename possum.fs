@@ -124,6 +124,7 @@ and parseOne (tc : Consumable) : expr list =
           match s with
           | "define" -> [AtomNode s] @ (parseN tc 2)
           | "defun" ->  [AtomNode s] @ (parseUntil tc "end") @ [AtomNode "end"]
+          | "defstruct" -> [AtomNode s] @ (parseUntil tc "end") @ [AtomNode "end"]
           | "cond" ->   [AtomNode s] @ (parseUntil tc "end") @ [AtomNode "end"]
           | "begin" ->  [AtomNode s] @ (parseUntil tc "end") @ [AtomNode "end"]
           | "list" ->   [AtomNode s] @ (parseUntil tc "end") @ [AtomNode "end"]
@@ -190,7 +191,7 @@ and evalOne (tc : Consumable) =
             raise (BindingError ((sprintf "Unknown binding '%s'" s), s))
 
   | Some (StringNode _ as n) | Some (IntegerNode _ as n) | Some (BoolNode _ as n)
-  | Some (NilNode as n)  | Some (StreamNode _ as n) -> n | Some (PairNode (_, _) as n) -> n
+  | Some (NilNode as n)  | Some (StreamNode _ as n) -> n | Some (StructNode _ as n) | Some (PairNode (_, _) as n) -> n
   | Some (FunctionNode (_, _, _) as n) -> n
   | None -> raise (ParseError "None given to evalOne")
   //| _ -> printfn "other (_)"; NilNode
@@ -295,6 +296,25 @@ let _defunSF (tc : Consumable) : expr =
   //gSym.[name.ToString()] <- f
   f
 
+let _defstructSF (tc : Consumable) : expr =
+  match (tc.consume(), tc.consume()) with
+    | (Some (AtomNode structName), Some (AtomNode "is")) -> 
+      let fields = parseUntil tc "end" 
+      let fn (args : expr list) : expr =
+        if not (args.Length = fields.Length) then
+          raise (SemanticError "must construct with all fields")
+
+        let c = new ExprDict()
+
+        for i = 0 to args.Length-1 do
+          c.[exprToString fields.[i]] <- args.[i]
+
+        StructNode c
+      let f = FunctionNode ("<struct ctor>", fields.Length, fn)
+      setSymLocal structName f
+      NilNode
+    | _ -> raise (ParseError "invalid defstruct syntax")
+
 let initSym () =
   gSym.["print"] <- FunctionNode ("print", 1, (fun args -> printfn ": %s" (exprToString args.[0]); NilNode))
   
@@ -334,8 +354,9 @@ let initSym () =
       
 
   gSpecialForms.["define"] <- _defineSF
+  gSpecialForms.["defstruct"] <- _defstructSF
   gSpecialForms.["set"] <- _setSF
-  gSpecialForms.["defun"] <- _defunSF // todo: shouldn't need this hack (just to fill the symtable)
+  gSpecialForms.["defun"] <- _defunSF
   gSpecialForms.["cond"] <- _condSF
   gSpecialForms.["begin"] <- fun tc ->
                                let rec iter r =
