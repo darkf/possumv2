@@ -8,3 +8,15 @@ define v vector 10 20
 print getf v x
 setf v y 90
 print getf v y
+
+defun vec+ lhs rhs is
+  vector
+    + getf lhs x getf rhs x
+    + getf lhs y getf rhs y
+end
+
+define v2 vector 20 30
+
+define summed vec+ v v2
+
+print concat concat getf summed x ", " getf summed y
