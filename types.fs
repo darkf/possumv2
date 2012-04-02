@@ -37,11 +37,11 @@ let rec exprToString e =
     | BoolNode b -> if b then "true" else "false"
     | PairNode (a, b) -> sprintf "<pair %s -> %s>" (exprToString a) (exprToString b) // todo: format list
     | StreamNode s -> "<stream>"
-    | StructNode s -> "<struct>"
+    | StructNode s -> exprRepr e
     | NilNode -> "nil"
     //| _ -> sprintf "<<<error>>> -> %s" (string e)
 
-let exprRepr e =
+and exprRepr e =
   match e with
     | AtomNode s -> sprintf "<atom '%s'>" s
     | StringNode s -> sprintf "<str '%s'>" s
@@ -50,7 +50,14 @@ let exprRepr e =
     | BoolNode b -> sprintf "<bool %s>" (if b then "true" else "false")
     | PairNode (a, b) -> sprintf "<pair %s -> %s>" (exprToString a) (exprToString b)
     | StreamNode s -> "<stream>"
-    | StructNode s -> "<struct>"
+    | StructNode st ->
+      let mutable s = "<struct "
+      let mutable j = []
+      for field in st.Keys do
+        let x = field + "=" + (exprToString st.[field])
+        j <- x :: j
+      s <- s + (j |> List.rev |> String.concat ", ") + ">"
+      s
     | NilNode -> sprintf "<nil>"
 
 let exprToInt (e : expr) : int =
