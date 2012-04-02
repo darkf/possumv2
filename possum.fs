@@ -349,6 +349,7 @@ let _lambdaSF (tc : Consumable) : expr =
 
 let initSym () =
   gSym.["print"] <- FunctionNode ("print", 1, (fun args -> printfn ": %s" (exprToString args.[0]); NilNode))
+  gSym.["print-raw"] <- FunctionNode ("print-raw", 1, (fun args -> printf "%s" (exprToString args.[0]); NilNode))
   
   gSym.["+"] <- FunctionNode ("+", 2, _fnPlus)
   gSym.["-"] <- FunctionNode ("-", 2, _fnMinus)
