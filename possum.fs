@@ -126,6 +126,7 @@ and parseOne (tc : Consumable) : expr list =
           | "defun" ->  [AtomNode s] @ (parseUntil tc "end") @ [AtomNode "end"]
           | "defstruct" -> [AtomNode s] @ (parseUntil tc "end") @ [AtomNode "end"]
           | "getf" -> [AtomNode s] @ (parseN tc 2)
+          | "setf" -> [AtomNode s] @ (parseN tc 2)
           | "cond" ->   [AtomNode s] @ (parseUntil tc "end") @ [AtomNode "end"]
           | "begin" ->  [AtomNode s] @ (parseUntil tc "end") @ [AtomNode "end"]
           | "list" ->   [AtomNode s] @ (parseUntil tc "end") @ [AtomNode "end"]
@@ -406,6 +407,17 @@ let initSym () =
         else
           raise (BindingError (sprintf "%s.%s" (exprToString st) field, ""))
       | _ -> raise (SemanticError "getf requires a struct and a field")
+
+
+  gSpecialForms.["setf"] <- fun tc ->
+    match (evalOne tc, tc.consume (), evalOne tc) with
+      | (StructNode fields as st, Some (AtomNode field), value) ->
+        if fields.ContainsKey(field) then
+          fields.[field] <- value
+          value
+        else
+          raise (BindingError (sprintf "%s.%s" (exprToString st) field, ""))
+      | _ -> raise (SemanticError "setf requires a struct and a field")
 
   gSym.["concat"] <- FunctionNode ("concat", 2, fun args ->
     match args with
