@@ -127,6 +127,7 @@ and parseOne (tc : Consumable) : expr list =
           | "defstruct" -> [AtomNode s] @ (parseUntil tc "end") @ [AtomNode "end"]
           | "getf" -> [AtomNode s] @ (parseN tc 2)
           | "setf" -> [AtomNode s] @ (parseN tc 2)
+          | "->" -> [AtomNode s] @ (parseUntil tc "end") @ [AtomNode "end"]
           | "cond" ->   [AtomNode s] @ (parseUntil tc "end") @ [AtomNode "end"]
           | "begin" ->  [AtomNode s] @ (parseUntil tc "end") @ [AtomNode "end"]
           | "list" ->   [AtomNode s] @ (parseUntil tc "end") @ [AtomNode "end"]
@@ -317,6 +318,35 @@ let _defstructSF (tc : Consumable) : expr =
       NilNode
     | _ -> raise (ParseError "invalid defstruct syntax")
 
+let _lambdaSF (tc : Consumable) : expr =
+  let args = parseUntil tc "is"
+  let body = parseBody tc
+
+  // if we're defining this in the global scope, don't inherit anything, just push a new scope
+  // otherwise, we're in a nested closure, let's define it locally and inherit the closing scope
+  let env = (if (lastEnv ()) = globalEnv then
+               newEnv ()
+             else
+               let o = lastEnv ()
+               let e = {sym=ExprDict(); prev=Some globalEnv}
+               // clone parent
+               for key in o.sym.Keys do
+                 e.sym.[key] <- o.sym.[key]
+               e)
+  
+  let fn (xargs : expr list) : expr =
+    pushEnv env
+    for i = 0 to args.Length-1 do
+      match args.[i] with
+        | AtomNode s -> setSymLocal s xargs.[i]
+        | _ -> raise (ParseError "argument not an atom")
+
+    let r = evalConsumable (Consumable body)
+    ignore (popEnv ())
+    r
+
+  FunctionNode ("<fn>", args.Length, fn)
+
 let initSym () =
   gSym.["print"] <- FunctionNode ("print", 1, (fun args -> printfn ": %s" (exprToString args.[0]); NilNode))
   
@@ -418,6 +448,8 @@ let initSym () =
         else
           raise (BindingError (sprintf "%s.%s" (exprToString st) field, ""))
       | _ -> raise (SemanticError "setf requires a struct and a field")
+
+  gSpecialForms.["->"] <- _lambdaSF
 
   gSym.["concat"] <- FunctionNode ("concat", 2, fun args ->
     match args with
