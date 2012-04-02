@@ -1,9 +1,9 @@
-possum v2.0.0
-copyright (c) 2011-2012 darkf
-licensed under the terms of the MIT license
+possum v2.0.0  
+copyright (c) 2011-2012 darkf  
+licensed under the terms of the MIT license  
 see LICENSE for details
 
-Possum is a scheme-inspired language that is designed to be concise and simple.
+Possum is a scheme-inspired language that is designed to be concise and simple.  
 It features fixed-arity functions, enabling us to lose the mess of parentheses.
 
 It features networking (via sockets), text processing (regular expressions), and other things that make it generally useful.
