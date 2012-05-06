@@ -160,17 +160,13 @@ and parseOne (tc : Consumable) : expr list =
       []
 
 and parseN (tc : Consumable) (n : int) : expr list =
-  let mutable out = []
-  for i = 1 to n do
-    out <- out @ (parseOne tc)
-  out
+  List.fold (@) [] [for x in 1..n -> parseOne tc]
 
 and parseExprs (tc : Consumable) =
   let rec iter xs =
-    let r = parseOne tc
-    match r with
-      [] -> xs
-    | _ -> iter (xs @ r)
+    match parseOne tc with
+    | [] -> xs
+    | r -> iter (xs @ r)
 
   Consumable (iter [])
 
@@ -185,10 +181,7 @@ and evalOne (tc : Consumable) =
         match r with
           Some (FunctionNode (name, arity, fn)) ->
             // apply function
-            let mutable xargs = []
-            for i in 1..arity do
-              xargs <- xargs @ [evalOne tc]
-            fn xargs
+            fn [for x in 1..arity -> evalOne tc]
           | Some a -> a // variable value
           | None ->
             raise (BindingError ((sprintf "Unknown binding '%s'" s), s))
@@ -197,13 +190,12 @@ and evalOne (tc : Consumable) =
   | Some (NilNode as n)  | Some (StreamNode _ as n) -> n | Some (StructNode _ as n) | Some (PairNode (_, _) as n) -> n
   | Some (FunctionNode (_, _, _) as n) -> n
   | None -> raise (ParseError "None given to evalOne")
-  //| _ -> printfn "other (_)"; NilNode
 
 and evalConsumable (tc : Consumable) : expr =
   let rec iter last =
     match tc.peek() with
-      | None -> last
-      | _ -> iter (evalOne tc)
+    | None -> last
+    | _ -> iter (evalOne tc)
 
   iter NilNode
 
