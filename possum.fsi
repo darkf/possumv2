@@ -4,42 +4,22 @@
 // see LICENSE for details
 
 module Possum
+open Consumable
+open Env
 open Types
 
 (*type 'a pslist = Cons of 'a * 'a pslist
                | Empty;;*)
 
-type Environment = { sym : ExprDict; prev : Environment option; }
-
-[<Class>]
-type Consumable =
-  new : expr list -> Consumable
-
-  member consume : unit -> expr option
-  member peek    : unit -> expr option
-
-  member remaining : unit -> int
-
-  member tell : unit -> int
-  member seek : int -> unit
-
 val printConsumable : Consumable -> unit
-
-val lookup : string -> expr option
 val isFunction : expr option -> bool
 
-val parseUntil : Consumable -> string -> expr list
-val parseBody  : Consumable -> expr list
-val parseOne   : Consumable -> expr list
-val parseN     : Consumable -> int -> expr list
-val parseExprs : Consumable -> Consumable
-
-val evalOne : Consumable -> expr
-val evalConsumable : Consumable -> expr
+//val evalOne : Consumable -> expr
+val evalConsumable : Environment -> Consumable -> expr
 
 val gSym : System.Collections.Generic.Dictionary<string, expr>
 val gSpecialForms : System.Collections.Generic.Dictionary<string, (Consumable -> expr)>
 
-val envstack : System.Collections.Generic.Stack<Environment>
+val globalEnv : Environment
 
 val initSym : unit -> unit

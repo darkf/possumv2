@@ -1,77 +1,76 @@
-﻿// possum v2.0.0
-// copyright (c) 2011-2012 darkf
-// licensed under the terms of the MIT license
-// see LICENSE for details
-
-module Parser
-
-open Possum
+﻿module Parser
+open Tokenize
 open Types
+open Consumable
+open Env
 
-let getNode acc =
-  match acc with
-    | "true" -> BoolNode true
-    | "false" -> BoolNode false
-    | "nil" -> NilNode
+let rec parseUntil (tc : Consumable) env until =
+  let rec iter xs =
+    let t = tc.peek ()
+    match t with
+      Some (AtomNode s) when s = until ->
+          ignore (tc.consume ())
+          xs
+      | None -> xs
+      | _ ->
+          iter (xs @ (parseOne tc env))
+  iter []
+
+and parseBody (tc : Consumable) env =
+  // parse until "end", basically
+  parseUntil tc env "end"
+
+and parseOne (tc : Consumable) env =
+    let t = tc.consume ()
+    match t with
+      Some (AtomNode s) ->
+        (*
+        if gSpecialForms.ContainsKey s then
+          match s with
+          | "define" -> [AtomNode s] @ (parseN tc 2)
+          | "defun" ->  [AtomNode s] @ (parseUntil tc "end") @ [AtomNode "end"]
+          | "defstruct" -> [AtomNode s] @ (parseUntil tc "end") @ [AtomNode "end"]
+          | "getf" -> [AtomNode s] @ (parseN tc 2)
+          | "setf" -> [AtomNode s] @ (parseN tc 2)
+          | "->" -> [AtomNode s] @ (parseUntil tc "end") @ [AtomNode "end"]
+          | "cond" ->   [AtomNode s] @ (parseUntil tc "end") @ [AtomNode "end"]
+          | "begin" ->  [AtomNode s] @ (parseUntil tc "end") @ [AtomNode "end"]
+          | "list" ->   [AtomNode s] @ (parseUntil tc "end") @ [AtomNode "end"]
+          | "set" ->    [AtomNode s] @ (parseN tc 2)
+          | "ref" ->    [AtomNode s; (tc.consume ()).Value]
+          | "if" ->
+            let cond = parseOne tc
+            let then1 = parseOne tc
+            match tc.peek () with
+              | Some (AtomNode "else") ->
+                ignore (tc.consume ());
+                let then2 = parseOne tc
+                [AtomNode "if"] @ cond @ then1 @ [AtomNode "else"] @ then2
+              | _ ->
+                [AtomNode "if"] @ cond @ then1
+                
+          | _ -> raise (ParseError ("Special form isn't covered in parsing: " + s))
+        else *)
+          match lookup env s with
+            Some (FunctionNode (name, arity, fn)) ->
+              //printfn "> consuming arguments for function %s: %d" name arity
+              let args = parseN tc env arity
+              [AtomNode s] @ args
+         
+          | _ -> [AtomNode s]
+    | Some (StringNode _ as n) | Some (IntegerNode _ as n) | Some (BoolNode _ as n) | Some (NilNode as n) -> [n]
+    | None -> []
     | _ ->
-      try
-        IntegerNode (System.Int32.Parse acc)
-      with
-        _ ->
-          AtomNode acc
+      printfn "other"
+      []
 
-let parseString (str : string) =
-  let mutable acc = ""
-  let mutable inString = false
-  let mutable inAtom = false
-  let mutable inEscape = false
-  let mutable inComment = false
-  let mutable xs = []
+and parseN (tc : Consumable) env n =
+  List.fold (@) [] [for x in 1..n -> parseOne tc env]
 
-  for i in 0..str.Length-1 do
-    match str.[i] with
-      | '(' when str.[i+1] = '*' && not inComment ->
-        // begin comment
-        inComment <- true
-      | ')' when str.[i-1] = '*' && inComment ->
-        // end comment
-        inComment <- false
-      | _ when inComment -> ()
-      // escape codes
-      | '\\' when inString && not inEscape -> inEscape <- true
-      | 'n' | 'r' | 't' | '"' | '\\' when inEscape ->
-        acc <- acc + (match str.[i] with
-                        | 'n' -> "\n"
-                        | 'r' -> "\r"
-                        | 't' -> "\t"
-                        | '"' -> "\""
-                        | '\\' -> "\\" | _ -> "")
-        inEscape <- false
-      // end string
-      | '"' when inString = true ->
-        xs <- xs @ [StringNode acc]
-        inString <- false
-        acc <- ""
-      // begin string
-      | '"' when not inString && not inAtom->
-        inString <- true
-      // whitespace
-      | ' ' | '\t' | '\r' | '\n' when not inString ->
-        if acc.Length > 0 then
-          xs <- xs @ [getNode acc]
-          acc <- ""
-          inAtom <- false
-      | c ->
-        acc <- acc + (string c)
-        if not inString then
-          inAtom <- true
+and parseExprs (tc : Consumable) env =
+  let rec iter xs =
+    match parseOne tc env with
+    | [] -> xs
+    | r -> iter (xs @ r)
 
-  if acc.Length > 0 then
-    xs <- xs @ [getNode acc]
-
-  xs
-
-let parseFile (filename : string) =
-  use sr = new System.IO.StreamReader(filename)
-  let txt = sr.ReadToEnd ()
-  parseString txt
+  Consumable (iter [])

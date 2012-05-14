@@ -7,82 +7,16 @@ module Possum
 
 open System
 open System.Collections.Generic
+open Consumable
 open Types
+open Env
 
-type ExprDict = Dictionary<string, expr>
-type Environment = { sym : ExprDict; prev : Environment option; }
-
-type Consumable(tokens : expr list) =
-  let mutable index = 0
-
-  member this.consume () =
-    if index >= tokens.Length then
-      None
-    else
-      let r = tokens.[index]
-      index <- index + 1
-      Some r
-
-  member this.peek () =
-    if index >= tokens.Length then
-      None
-    else
-      Some tokens.[index]
-
-  member this.remaining () = tokens.Length - index
-
-  member this.tell () = index
-  member this.seek x =
-    if x < tokens.Length then
-      index <- x
 
 let gSym = new ExprDict()
 let gSpecialForms = new Dictionary<string, (Consumable -> expr)>()
 let envstack = new Stack<Environment>()
 let globalEnv = {sym=gSym; prev=None}
 
-let lastEnv () =
-  envstack.Peek ()
-
-let pushNewEnv () =
-  envstack.Push {sym=new ExprDict(); prev=Some (lastEnv ())}
-
-let pushEnv env =
-  envstack.Push env
-
-let popEnv () =
-  envstack.Pop ()
-
-let newEnv () =
-  {sym=new ExprDict(); prev=Some (lastEnv ())}
-
-let lookup name =
-  let rec iter env =
-    if env.sym.ContainsKey name then
-      Some env.sym.[name]
-    else
-      match env.prev with
-        | Some a -> iter a
-        | None -> None
-
-  iter (lastEnv ())
-
-let setSymFar name value =
-  let rec iter env =
-    if env.sym.ContainsKey name then
-      env.sym.[name] <- value
-    else
-      // look into the upper scopes
-      match env.prev with
-        | Some a -> iter a
-        | None ->
-          (* we're at the upper-most scope, and we can't find it. set it here *)
-          env.sym.[name] <- value
-
-  iter (lastEnv ())
-
-let setSymLocal name value =
-  (lastEnv ()).sym.[name] <- value
 
 let isFunction e =
   match e with
@@ -100,88 +34,19 @@ let printConsumable (tc : Consumable) =
         doContinue <- false
   ignore (tc.seek now)
 
-let rec parseUntil (tc : Consumable) (until : string) : expr list =
-  let rec iter xs =
-    let t = tc.peek ()
-    match t with
-      Some (AtomNode s) when s = until ->
-          ignore (tc.consume ())
-          xs
-      | None -> xs
-      | _ ->
-          iter (xs @ (parseOne tc))
-  iter []
 
-and parseBody (tc : Consumable) : expr list =
-  // parse until "end", basically
-  parseUntil tc "end"
-
-and parseOne (tc : Consumable) : expr list =
-    let t = tc.consume ()
-    match t with
-      Some (AtomNode s) ->
-        if gSpecialForms.ContainsKey s then
-          match s with
-          | "define" -> [AtomNode s] @ (parseN tc 2)
-          | "defun" ->  [AtomNode s] @ (parseUntil tc "end") @ [AtomNode "end"]
-          | "defstruct" -> [AtomNode s] @ (parseUntil tc "end") @ [AtomNode "end"]
-          | "getf" -> [AtomNode s] @ (parseN tc 2)
-          | "setf" -> [AtomNode s] @ (parseN tc 2)
-          | "->" -> [AtomNode s] @ (parseUntil tc "end") @ [AtomNode "end"]
-          | "cond" ->   [AtomNode s] @ (parseUntil tc "end") @ [AtomNode "end"]
-          | "begin" ->  [AtomNode s] @ (parseUntil tc "end") @ [AtomNode "end"]
-          | "list" ->   [AtomNode s] @ (parseUntil tc "end") @ [AtomNode "end"]
-          | "set" ->    [AtomNode s] @ (parseN tc 2)
-          | "ref" ->    [AtomNode s; (tc.consume ()).Value]
-          | "if" ->
-            let cond = parseOne tc
-            let then1 = parseOne tc
-            match tc.peek () with
-              | Some (AtomNode "else") ->
-                ignore (tc.consume ());
-                let then2 = parseOne tc
-                [AtomNode "if"] @ cond @ then1 @ [AtomNode "else"] @ then2
-              | _ ->
-                [AtomNode "if"] @ cond @ then1
-                
-          | _ -> raise (ParseError ("Special form isn't covered in parsing: " + s))
-        else
-          match lookup s with
-            Some (FunctionNode (name, arity, fn)) ->
-              //printfn "> consuming arguments for function %s: %d" name arity
-              let args = parseN tc arity
-              [AtomNode s] @ args
-         
-          | _ -> [AtomNode s]
-    | Some (StringNode _ as n) | Some (IntegerNode _ as n) | Some (BoolNode _ as n) | Some (NilNode as n) -> [n]
-    | None -> []
-    | _ ->
-      printfn "other"
-      []
-
-and parseN (tc : Consumable) (n : int) : expr list =
-  List.fold (@) [] [for x in 1..n -> parseOne tc]
-
-and parseExprs (tc : Consumable) =
-  let rec iter xs =
-    match parseOne tc with
-    | [] -> xs
-    | r -> iter (xs @ r)
-
-  Consumable (iter [])
-
-and evalOne (tc : Consumable) =
+let rec evalOne (tc : Consumable) env =
   let t = tc.consume ()
   match t with
     Some (AtomNode s) ->
       if gSpecialForms.ContainsKey s then
         gSpecialForms.[s] tc
       else
-        let r = lookup s
+        let r = lookup env s
         match r with
           Some (FunctionNode (name, arity, fn)) ->
             // apply function
-            fn [for x in 1..arity -> evalOne tc]
+            fn [for x in 1..arity -> evalOne tc env]
           | Some a -> a // variable value
           | None ->
             raise (BindingError ((sprintf "Unknown binding '%s'" s), s))
@@ -191,11 +56,11 @@ and evalOne (tc : Consumable) =
   | Some (FunctionNode (_, _, _) as n) -> n
   | None -> raise (ParseError "None given to evalOne")
 
-and evalConsumable (tc : Consumable) : expr =
+and evalConsumable env (tc : Consumable) : expr =
   let rec iter last =
     match tc.peek() with
     | None -> last
-    | _ -> iter (evalOne tc)
+    | _ -> iter (evalOne tc env)
 
   iter NilNode
 
@@ -207,137 +72,6 @@ let _fnMinus (args : expr list) : expr =
 
 let _fnMul (args : expr list) : expr =
   IntegerNode ((exprToInt args.[0]) * (exprToInt args.[1]))
-
-let _defineSF (tc : Consumable) : expr =
-  match tc.consume () with
-    | Some (AtomNode s) ->
-      let value = evalOne tc
-      //printfn "> defining '%s' to %s" s (exprToString value)
-      setSymLocal s value
-      value
-    | _ -> raise (ParseError "non-atom given to define")
-
-let _setSF (tc : Consumable) =
-  match tc.consume () with
-    | Some (AtomNode s) ->
-      let value = evalOne tc
-      setSymFar s value
-      value
-    | _ -> raise (SemanticError "non-atom given to set")
-
-let _condSF (tc : Consumable) : expr =
-  // cond
-  //   or nil? x empty? x
-  //     print "nil or empty"
-  //   true
-  //     print "not nil or empty"
-  // end
-
-  let rec iter () =
-    match tc.peek() with
-      | Some (AtomNode "end") ->
-        ignore (tc.consume ())
-        NilNode
-      | _ ->
-        let cond = evalOne tc
-       
-        if (exprToBool cond) = true then
-          let r = evalOne tc
-          ignore (parseUntil tc "end")
-          r
-        else
-          ignore (parseOne tc) // get rid of path that didn't match
-          iter ()
-  iter ()
-
-let _defunSF (tc : Consumable) : expr =
-  let name = (tc.consume ()).Value.ToString()
-  let args = parseUntil tc "is"
-  //pushNewEnv ()
-  let body = parseBody tc
-
-  // if we're defining this in the global scope, don't inherit anything, just push a new scope
-  // otherwise, we're in a nested closure, let's define it locally and inherit the closing scope
-  let env = (if (lastEnv ()) = globalEnv then
-               newEnv ()
-             else
-               let o = lastEnv ()
-               let e = {sym=ExprDict(); prev=Some globalEnv}
-               // clone parent
-               for key in o.sym.Keys do
-                 e.sym.[key] <- o.sym.[key]
-               e)
-  
-  let fn (xargs : expr list) : expr =
-    pushEnv env
-    for i = 0 to args.Length-1 do
-      match args.[i] with
-        | AtomNode s -> setSymLocal s xargs.[i]
-        | _ -> raise (ParseError "argument not an atom")
-
-    let r = evalConsumable (Consumable body)
-    ignore (popEnv ())
-    r
-  
-  let f = FunctionNode (name, args.Length, fn)
-
-  // now the closure needs to know itself -- because when it inherits its parent,
-  // this closure isn't yet defined, so we need to define it.
-  // since env.sym is mutable, we can just do it now.
-  env.sym.[name] <- f
-
-  //ignore (popEnv ())
-  setSymLocal name f
-  //gSym.[name.ToString()] <- f
-  f
-
-let _defstructSF (tc : Consumable) : expr =
-  match (tc.consume(), tc.consume()) with
-    | (Some (AtomNode structName), Some (AtomNode "is")) -> 
-      let fields = parseUntil tc "end" 
-      let fn (args : expr list) : expr =
-        if not (args.Length = fields.Length) then
-          raise (SemanticError "must construct with all fields")
-
-        let c = new ExprDict()
-
-        for i = 0 to args.Length-1 do
-          c.[exprToString fields.[i]] <- args.[i]
-
-        StructNode c
-      let f = FunctionNode ("<struct ctor>", fields.Length, fn)
-      setSymLocal structName f
-      NilNode
-    | _ -> raise (ParseError "invalid defstruct syntax")
-
-let _lambdaSF (tc : Consumable) : expr =
-  let args = parseUntil tc "is"
-  let body = parseBody tc
-
-  // if we're defining this in the global scope, don't inherit anything, just push a new scope
-  // otherwise, we're in a nested closure, let's define it locally and inherit the closing scope
-  let env = (if (lastEnv ()) = globalEnv then
-               newEnv ()
-             else
-               let o = lastEnv ()
-               let e = {sym=ExprDict(); prev=Some globalEnv}
-               // clone parent
-               for key in o.sym.Keys do
-                 e.sym.[key] <- o.sym.[key]
-               e)
-  
-  let fn (xargs : expr list) : expr =
-    pushEnv env
-    for i = 0 to args.Length-1 do
-      match args.[i] with
-        | AtomNode s -> setSymLocal s xargs.[i]
-        | _ -> raise (ParseError "argument not an atom")
-
-    let r = evalConsumable (Consumable body)
-    ignore (popEnv ())
-    r
-
-  FunctionNode ("<fn>", args.Length, fn)
 
 let initSym () =
   gSym.["print"] <- FunctionNode ("print", 1, (fun args -> printfn ": %s" (exprToString args.[0]); NilNode))
@@ -377,72 +111,6 @@ let initSym () =
       | [PairNode (a,_)] -> BoolNode (exprEquals a NilNode)
       | _ -> raise (SemanticError "non-(string|pair) passed to empty?"))
       
-
-  gSpecialForms.["define"] <- _defineSF
-  gSpecialForms.["defstruct"] <- _defstructSF
-  gSpecialForms.["set"] <- _setSF
-  gSpecialForms.["defun"] <- _defunSF
-  gSpecialForms.["cond"] <- _condSF
-  gSpecialForms.["begin"] <- fun tc ->
-                               let rec iter r =
-                                 match tc.peek () with
-                                   | Some (AtomNode "end") -> ignore (tc.consume ()); r
-                                   | _ -> iter (evalOne tc)
-                               iter NilNode
-  gSpecialForms.["list"] <- fun tc ->
-                              let rec iter (xs : expr) =
-                                match tc.consume () with
-                                  | Some (AtomNode "end") -> xs
-                                  | Some a -> iter (PairNode (a, xs))
-                                  | None -> raise (ParseError "expected end, not EOF")
-                              possumListReverse (iter NilNode)
-  gSpecialForms.["if"] <- fun tc ->
-                            let cond = exprToBool (evalOne tc)
-                            let then1 = parseOne tc
-
-                            match tc.peek () with
-                              | Some (AtomNode "else") ->
-                                ignore (tc.consume ()); // consume else
-                                if cond then
-                                  let r = evalConsumable (Consumable then1)
-                                  ignore (parseOne tc) // consume else part
-                                  r
-                                else
-                                  evalOne tc
-                              | _ ->
-                                if cond then evalConsumable (Consumable then1) else NilNode
-
-  gSpecialForms.["ref"] <- fun tc ->
-    match tc.consume () with
-      | Some (AtomNode a as e) ->
-        match (lookup a) with
-          | Some (FunctionNode (_, _, _) as f) -> f
-          | Some _ -> e
-          | None -> e
-      | Some a -> raise (SemanticError "cannot ref non-atoms")
-      | None -> raise (ParseError "nothing to ref")
-
-  gSpecialForms.["getf"] <- fun tc ->
-    match (evalOne tc, tc.consume ()) with
-      | (StructNode fields as st, Some (AtomNode field)) ->
-        if fields.ContainsKey(field) then
-          fields.[field]
-        else
-          raise (BindingError (sprintf "%s.%s" (exprToString st) field, ""))
-      | _ -> raise (SemanticError "getf requires a struct and a field")
-
-
-  gSpecialForms.["setf"] <- fun tc ->
-    match (evalOne tc, tc.consume (), evalOne tc) with
-      | (StructNode fields as st, Some (AtomNode field), value) ->
-        if fields.ContainsKey(field) then
-          fields.[field] <- value
-          value
-        else
-          raise (BindingError (sprintf "%s.%s" (exprToString st) field, ""))
-      | _ -> raise (SemanticError "setf requires a struct and a field")
-
-  gSpecialForms.["->"] <- _lambdaSF
 
   gSym.["concat"] <- FunctionNode ("concat", 2, fun args ->
     match args with
@@ -515,21 +183,16 @@ let initSym () =
         toPossumList (List.init s.Length (fun i -> StringNode s.[i]))
       | _ -> raise (SemanticError "non-string given to string-split"))
 
-  gSym.["set-symbol"] <- FunctionNode ("set-symbol", 2, fun args ->
-    match args with
-      | [StringNode a; b] ->
-        setSymLocal a b
-        b
-      | _ -> raise (SemanticError "invalid args to set-symbol"))
-
   gSym.["set-global-symbol"] <- FunctionNode ("set-global-symbol", 2, fun args ->
     match args with
       | [StringNode a; b] ->
         gSym.[a] <- b
         b
       | _ -> raise (SemanticError "invalid args to set-global-symbol"))
+
+  gSym.["y"] <- IntegerNode 666
   
-  gSym.["_printsym"] <- FunctionNode ("_printsym", 0, fun args ->
+  (*gSym.["_printsym"] <- FunctionNode ("_printsym", 0, fun args ->
     //for key in gSym.Keys do
     //  printfn "  %s -> %s" key (exprToString gSym.[key])
     let rec iter i env =
@@ -542,12 +205,11 @@ let initSym () =
         | Some a -> iter (i + 1) a
         | None -> ()
       
-    iter 0 (lastEnv ())
-    NilNode)
+    iter 0 ENV)
+    NilNode)*)
 
-  PossumStream.initModule gSym
-  PossumText.initModule gSym
+  //PossumStream.initModule gSym
+  //PossumText.initModule gSym
 
-  pushEnv globalEnv
   ()
 

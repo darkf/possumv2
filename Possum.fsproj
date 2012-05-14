@@ -43,11 +43,15 @@
   <Import Project="$(MSBuildExtensionsPath32)\..\Microsoft F#\v4.0\Microsoft.FSharp.Targets" Condition=" Exists('$(MSBuildBinPath)\Microsoft.Build.Tasks.v4.0.dll')" />
   <ItemGroup>
     <Compile Include="types.fs" />
+    <Compile Include="Consumable.fsi" />
+    <Compile Include="tokenize.fs" />
+    <Compile Include="environment.fs" />
     <Compile Include="possum.fsi" />
     <Compile Include="lib\text.fs" />
     <Compile Include="lib\stream.fs" />
-    <Compile Include="possum.fs" />
+    <Compile Include="Consumable.fs" />
     <Compile Include="parser.fs" />
+    <Compile Include="possum.fs" />
     <Compile Include="main.fs" />
   </ItemGroup>
   <ItemGroup>

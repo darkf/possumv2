@@ -6,7 +6,10 @@
 module Main
 
 open Possum
+open Consumable
+open Tokenize
 open Parser
+open Env
 open Types
 
 let main =
@@ -23,7 +26,7 @@ let main =
         match input with
           | ":q" | ":quit" | ":exit" -> cont <- false
           | _ ->
-            let r = evalConsumable (Consumable (parseString input))
+            let r = (Consumable (tokenizeString input)) |> evalConsumable globalEnv
             printfn "%s" (exprRepr r)
       with
         | BindingError (msg, _) -> printfn "BindingError: %s" msg
@@ -31,14 +34,14 @@ let main =
         | ParseError msg ->        printfn "ParseError: %s" msg
         | e ->                     printfn "Unhandled exception: %s" e.Message
   else
-    let tokens = parseFile args.[1] //"defun f is end print \"hi\""
+    let tokens = tokenizeFile args.[1] //"defun f is end print \"hi\""
     let tc = Consumable tokens
     //printConsumable tc
     initSym ()
     
-    let st = parseExprs tc
+    let st = parseExprs tc globalEnv
     try
-      ignore (evalConsumable st)
+      ignore (evalConsumable globalEnv st)
     with
       | BindingError (msg, _) -> printfn "BindingError: %s" msg
       | SemanticError msg ->     printfn "SemanticError: %s" msg
