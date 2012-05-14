@@ -9,7 +9,7 @@ module Types
 type expr = AtomNode of string
           | StringNode of string
           | IntegerNode of int
-          | FunctionNode of string * int * (expr list -> expr)
+          | FunctionNode of string * int * Environment * (expr list -> expr)
           | StreamNode of System.IO.Stream
           | StructNode of ExprDict
           | PairNode of expr * expr
@@ -23,6 +23,7 @@ type expr = AtomNode of string
               | _ -> "fixme"
 
 and ExprDict = System.Collections.Generic.Dictionary<string, expr>
+and Environment = { sym : ExprDict; prev : Environment option; }
 
 exception ParseError of string
 exception BindingError of string * string
@@ -33,7 +34,7 @@ let rec exprToString e =
     | AtomNode s -> s
     | StringNode s -> s
     | IntegerNode i -> string i
-    | FunctionNode (name, _, _) -> sprintf "<fn '%s'>" name
+    | FunctionNode (name, _, _, _) -> sprintf "<fn '%s'>" name
     | BoolNode b -> if b then "true" else "false"
     | PairNode (a, b) -> sprintf "<pair %s -> %s>" (exprToString a) (exprToString b) // todo: format list
     | StreamNode s -> "<stream>"
@@ -46,7 +47,7 @@ and exprRepr e =
     | AtomNode s -> sprintf "<atom '%s'>" s
     | StringNode s -> sprintf "<str '%s'>" s
     | IntegerNode i -> sprintf "<int %d>" i
-    | FunctionNode (name, _, _) -> sprintf "<fn '%s'>" name
+    | FunctionNode (name, _, _, _) -> sprintf "<fn '%s'>" name
     | BoolNode b -> sprintf "<bool %s>" (if b then "true" else "false")
     | PairNode (a, b) -> sprintf "<pair %s -> %s>" (exprToString a) (exprToString b)
     | StreamNode s -> "<stream>"

@@ -20,7 +20,7 @@ let globalEnv = {sym=gSym; prev=None}
 
 let isFunction e =
   match e with
-    Some (FunctionNode (_, _, _)) -> true
+    Some (FunctionNode (_, _, _, _)) -> true
   | _ -> false
 
 let printConsumable (tc : Consumable) =
@@ -44,16 +44,16 @@ let rec evalOne (tc : Consumable) env =
       else
         let r = lookup env s
         match r with
-          Some (FunctionNode (name, arity, fn)) ->
+          Some (FunctionNode (name, arity, cls, fn)) ->
             // apply function
-            fn [for x in 1..arity -> evalOne tc env]
+            fn [for x in 1..arity -> evalOne tc cls]
           | Some a -> a // variable value
           | None ->
             raise (BindingError ((sprintf "Unknown binding '%s'" s), s))
 
   | Some (StringNode _ as n) | Some (IntegerNode _ as n) | Some (BoolNode _ as n)
   | Some (NilNode as n)  | Some (StreamNode _ as n) -> n | Some (StructNode _ as n) | Some (PairNode (_, _) as n) -> n
-  | Some (FunctionNode (_, _, _) as n) -> n
+  | Some (FunctionNode (_, _, _, _) as n) -> n
   | None -> raise (ParseError "None given to evalOne")
 
 and evalConsumable env (tc : Consumable) : expr =
@@ -74,13 +74,13 @@ let _fnMul (args : expr list) : expr =
   IntegerNode ((exprToInt args.[0]) * (exprToInt args.[1]))
 
 let initSym () =
-  gSym.["print"] <- FunctionNode ("print", 1, (fun args -> printfn ": %s" (exprToString args.[0]); NilNode))
-  gSym.["print-raw"] <- FunctionNode ("print-raw", 1, (fun args -> printf "%s" (exprToString args.[0]); NilNode))
+  gSym.["print"] <- FunctionNode ("print", 1, globalEnv, (fun args -> printfn ": %s" (exprToString args.[0]); NilNode))
+  gSym.["print-raw"] <- FunctionNode ("print-raw", 1, globalEnv, (fun args -> printf "%s" (exprToString args.[0]); NilNode))
   
-  gSym.["+"] <- FunctionNode ("+", 2, _fnPlus)
-  gSym.["-"] <- FunctionNode ("-", 2, _fnMinus)
-  gSym.["*"] <- FunctionNode ("*", 2, _fnMul)
-  gSym.["="] <- FunctionNode ("=", 2, fun args -> 
+  gSym.["+"] <- FunctionNode ("+", 2, globalEnv, _fnPlus)
+  gSym.["-"] <- FunctionNode ("-", 2, globalEnv, _fnMinus)
+  gSym.["*"] <- FunctionNode ("*", 2, globalEnv, _fnMul)
+  (*gSym.["="] <- FunctionNode ("=", 2, fun args -> 
     let r = (exprEquals args.[0] args.[1])
     //printfn "eq? : %s" (if r = true then "true" else "false")
     BoolNode r)
@@ -182,8 +182,9 @@ let initSym () =
         let s = str.Split([| delim |], StringSplitOptions.None)
         toPossumList (List.init s.Length (fun i -> StringNode s.[i]))
       | _ -> raise (SemanticError "non-string given to string-split"))
+  *)
 
-  gSym.["set-global-symbol"] <- FunctionNode ("set-global-symbol", 2, fun args ->
+  gSym.["set-global-symbol"] <- FunctionNode ("set-global-symbol", 2, globalEnv, fun args ->
     match args with
       | [StringNode a; b] ->
         gSym.[a] <- b

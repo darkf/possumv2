@@ -3,9 +3,6 @@ open System
 open System.Collections.Generic
 open Types
 
-type ExprDict = Dictionary<string, expr>
-type Environment = { sym : ExprDict; prev : Environment option; }
-
 let newEnv p =
   {sym=new ExprDict(); prev=p}
 

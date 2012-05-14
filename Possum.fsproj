@@ -47,8 +47,6 @@
     <Compile Include="tokenize.fs" />
     <Compile Include="environment.fs" />
     <Compile Include="possum.fsi" />
-    <Compile Include="lib\text.fs" />
-    <Compile Include="lib\stream.fs" />
     <Compile Include="Consumable.fs" />
     <Compile Include="parser.fs" />
     <Compile Include="possum.fs" />

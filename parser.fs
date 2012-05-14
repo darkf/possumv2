@@ -52,7 +52,7 @@ and parseOne (tc : Consumable) env =
           | _ -> raise (ParseError ("Special form isn't covered in parsing: " + s))
         else *)
           match lookup env s with
-            Some (FunctionNode (name, arity, fn)) ->
+            Some (FunctionNode (_, arity, _, _)) ->
               //printfn "> consuming arguments for function %s: %d" name arity
               let args = parseN tc env arity
               [AtomNode s] @ args
