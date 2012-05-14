@@ -4,7 +4,6 @@
 // see LICENSE for details
 
 module Possum
-open Consumable
 open Env
 open Types
 

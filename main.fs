@@ -6,7 +6,6 @@
 module Main
 
 open Possum
-open Consumable
 open Tokenize
 open Parser
 open Env

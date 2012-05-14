@@ -7,9 +7,9 @@ module Possum
 
 open System
 open System.Collections.Generic
-open Consumable
 open Types
 open Env
+open Parser
 
 
 let gSym = new ExprDict()
@@ -38,15 +38,16 @@ let printConsumable (tc : Consumable) =
 let rec evalOne (tc : Consumable) env =
   let t = tc.consume ()
   match t with
-    Some (AtomNode s) ->
-      if gSpecialForms.ContainsKey s then
-        gSpecialForms.[s] tc
-      else
+  | Some (AtomNode s) ->
         let r = lookup env s
         match r with
           Some (FunctionNode (name, arity, cls, fn)) ->
             // apply function
             fn [for x in 1..arity -> evalOne tc cls]
+          | Some (SpecialFormNode (_, eval)) ->
+            // apply special form
+            printfn "calling eval for special form %s" s
+            eval tc env
           | Some a -> a // variable value
           | None ->
             raise (BindingError ((sprintf "Unknown binding '%s'" s), s))
@@ -54,6 +55,7 @@ let rec evalOne (tc : Consumable) env =
   | Some (StringNode _ as n) | Some (IntegerNode _ as n) | Some (BoolNode _ as n)
   | Some (NilNode as n)  | Some (StreamNode _ as n) -> n | Some (StructNode _ as n) | Some (PairNode (_, _) as n) -> n
   | Some (FunctionNode (_, _, _, _) as n) -> n
+  | Some (SpecialFormNode (_, _) as n) -> n
   | None -> raise (ParseError "None given to evalOne")
 
 and evalConsumable env (tc : Consumable) : expr =
@@ -192,6 +194,8 @@ let initSym () =
       | _ -> raise (SemanticError "invalid args to set-global-symbol"))
 
   gSym.["y"] <- IntegerNode 666
+
+  gSym.["hc"] <- SpecialFormNode ((fun tc env -> parseUntil tc env "end"), (fun tc env -> failwith "eval hc"))
   
   (*gSym.["_printsym"] <- FunctionNode ("_printsym", 0, fun args ->
     //for key in gSym.Keys do

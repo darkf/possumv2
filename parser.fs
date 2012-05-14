@@ -1,7 +1,6 @@
 ﻿module Parser
 open Tokenize
 open Types
-open Consumable
 open Env
 
 let rec parseUntil (tc : Consumable) env until =
@@ -52,7 +51,10 @@ and parseOne (tc : Consumable) env =
           | _ -> raise (ParseError ("Special form isn't covered in parsing: " + s))
         else *)
           match lookup env s with
-            Some (FunctionNode (_, arity, _, _)) ->
+          | Some (SpecialFormNode (parse, _)) ->
+            printfn "calling special form's parse for %s" s
+            [AtomNode s] @ parse tc env
+          | Some (FunctionNode (_, arity, _, _)) ->
               //printfn "> consuming arguments for function %s: %d" name arity
               let args = parseN tc env arity
               [AtomNode s] @ args

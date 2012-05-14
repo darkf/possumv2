@@ -1,12 +1,11 @@
 ﻿module Consumable
-open Types
 
 [<Class>]
 type Consumable =
-  new : expr list -> Consumable
+  new : 'a list -> Consumable
 
-  member consume : unit -> expr option
-  member peek    : unit -> expr option
+  member consume : unit -> 'a option
+  member peek    : unit -> 'a option
 
   member remaining : unit -> int
 

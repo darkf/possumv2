@@ -10,6 +10,7 @@ type expr = AtomNode of string
           | StringNode of string
           | IntegerNode of int
           | FunctionNode of string * int * Environment * (expr list -> expr)
+          | SpecialFormNode of (Consumable -> Environment -> expr list) * (Consumable -> Environment -> expr)
           | StreamNode of System.IO.Stream
           | StructNode of ExprDict
           | PairNode of expr * expr
@@ -25,6 +26,30 @@ type expr = AtomNode of string
 and ExprDict = System.Collections.Generic.Dictionary<string, expr>
 and Environment = { sym : ExprDict; prev : Environment option; }
 
+and Consumable(tokens : expr list) =
+  let mutable index = 0
+
+  member this.consume () =
+    if index >= tokens.Length then
+      None
+    else
+      let r = tokens.[index]
+      index <- index + 1
+      Some r
+
+  member this.peek () =
+    if index >= tokens.Length then
+      None
+    else
+      Some tokens.[index]
+
+  member this.remaining () = tokens.Length - index
+
+  member this.tell () = index
+  member this.seek x =
+    if x < tokens.Length then
+      index <- x
+
 exception ParseError of string
 exception BindingError of string * string
 exception SemanticError of string
@@ -35,6 +60,7 @@ let rec exprToString e =
     | StringNode s -> s
     | IntegerNode i -> string i
     | FunctionNode (name, _, _, _) -> sprintf "<fn '%s'>" name
+    | SpecialFormNode (_, _) -> "<special form>"
     | BoolNode b -> if b then "true" else "false"
     | PairNode (a, b) -> sprintf "<pair %s -> %s>" (exprToString a) (exprToString b) // todo: format list
     | StreamNode s -> "<stream>"
@@ -48,6 +74,7 @@ and exprRepr e =
     | StringNode s -> sprintf "<str '%s'>" s
     | IntegerNode i -> sprintf "<int %d>" i
     | FunctionNode (name, _, _, _) -> sprintf "<fn '%s'>" name
+    | SpecialFormNode (_, _) -> "<special form>"
     | BoolNode b -> sprintf "<bool %s>" (if b then "true" else "false")
     | PairNode (a, b) -> sprintf "<pair %s -> %s>" (exprToString a) (exprToString b)
     | StreamNode s -> "<stream>"
