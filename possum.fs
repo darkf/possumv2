@@ -35,7 +35,7 @@ let printConsumable (tc : Consumable) =
   ignore (tc.seek now)
 
 
-let rec evalOne (tc : Consumable) env =
+let rec evalOne (tc : Consumable) env : expr =
   let t = tc.consume ()
   match t with
   | Some (AtomNode s) ->
@@ -43,13 +43,14 @@ let rec evalOne (tc : Consumable) env =
         match r with
           Some (FunctionNode (name, arity, cls, fn)) ->
             // apply function
-            fn [for x in 1..arity -> evalOne tc cls]
+            fn [for x in 1..arity -> evalOne tc cls] cls
           | Some (SpecialFormNode (_, eval)) ->
             // apply special form
             printfn "calling eval for special form %s" s
             eval tc env
           | Some a -> a // variable value
           | None ->
+            printfn "binding error in %A" env
             raise (BindingError ((sprintf "Unknown binding '%s'" s), s))
 
   | Some (StringNode _ as n) | Some (IntegerNode _ as n) | Some (BoolNode _ as n)
@@ -66,18 +67,42 @@ and evalConsumable env (tc : Consumable) : expr =
 
   iter NilNode
 
-let _fnPlus (args : expr list) : expr =
+let _fnPlus (args : expr list) cls : expr =
   IntegerNode ((exprToInt args.[0]) + (exprToInt args.[1]))
 
-let _fnMinus (args : expr list) : expr =
+let _fnMinus (args : expr list) cls : expr =
   IntegerNode ((exprToInt args.[0]) - (exprToInt args.[1]))
 
-let _fnMul (args : expr list) : expr =
+let _fnMul (args : expr list) cls : expr =
   IntegerNode ((exprToInt args.[0]) * (exprToInt args.[1]))
 
+let _defunParse (tc : Consumable) env =
+  (parseUntil tc env "end") @ [AtomNode "end"]
+
+let _defunEval (tc : Consumable) env =
+  let name = (tc.consume ()).Value.ToString()
+  let args = parseUntil tc env "is"
+
+  printfn "\defun: %s / %A" name args
+
+  let body = parseBody tc env
+
+  let fn (xargs : expr list) cls : expr =
+    for i = 0 to args.Length-1 do
+      match args.[i] with
+      | AtomNode s -> printfn "local setting %s to %s" s (exprRepr xargs.[i]); setSymLocal cls s xargs.[i]
+      | _ -> raise (ParseError "argument not an atom")
+
+    evalConsumable cls (Consumable body)
+
+  let n = {sym=new ExprDict(); prev=Some env}
+  let f = FunctionNode (name, args.Length, n, fn)
+  setSymLocal env name f
+  NilNode
+
 let initSym () =
-  gSym.["print"] <- FunctionNode ("print", 1, globalEnv, (fun args -> printfn ": %s" (exprToString args.[0]); NilNode))
-  gSym.["print-raw"] <- FunctionNode ("print-raw", 1, globalEnv, (fun args -> printf "%s" (exprToString args.[0]); NilNode))
+  gSym.["print"] <- FunctionNode ("print", 1, globalEnv, (fun args env -> printfn ": %s" (exprToString args.[0]); NilNode))
+  gSym.["print-raw"] <- FunctionNode ("print-raw", 1, globalEnv, (fun args env -> printf "%s" (exprToString args.[0]); NilNode))
   
   gSym.["+"] <- FunctionNode ("+", 2, globalEnv, _fnPlus)
   gSym.["-"] <- FunctionNode ("-", 2, globalEnv, _fnMinus)
@@ -186,7 +211,7 @@ let initSym () =
       | _ -> raise (SemanticError "non-string given to string-split"))
   *)
 
-  gSym.["set-global-symbol"] <- FunctionNode ("set-global-symbol", 2, globalEnv, fun args ->
+  gSym.["set-global-symbol"] <- FunctionNode ("set-global-symbol", 2, globalEnv, fun args env ->
     match args with
       | [StringNode a; b] ->
         gSym.[a] <- b
@@ -194,8 +219,9 @@ let initSym () =
       | _ -> raise (SemanticError "invalid args to set-global-symbol"))
 
   gSym.["y"] <- IntegerNode 666
-
   gSym.["hc"] <- SpecialFormNode ((fun tc env -> parseUntil tc env "end"), (fun tc env -> failwith "eval hc"))
+
+  gSym.["defun"] <- SpecialFormNode (_defunParse, _defunEval)
   
   (*gSym.["_printsym"] <- FunctionNode ("_printsym", 0, fun args ->
     //for key in gSym.Keys do

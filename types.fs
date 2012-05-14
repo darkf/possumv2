@@ -9,7 +9,7 @@ module Types
 type expr = AtomNode of string
           | StringNode of string
           | IntegerNode of int
-          | FunctionNode of string * int * Environment * (expr list -> expr)
+          | FunctionNode of string * int * Environment * (expr list -> Environment -> expr)
           | SpecialFormNode of (Consumable -> Environment -> expr list) * (Consumable -> Environment -> expr)
           | StreamNode of System.IO.Stream
           | StructNode of ExprDict
