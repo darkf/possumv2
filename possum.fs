@@ -43,14 +43,14 @@ let rec evalOne (tc : Consumable) env : expr =
         match r with
           Some (FunctionNode (name, arity, cls, fn)) ->
             // apply function
-            fn [for x in 1..arity -> evalOne tc cls] cls
+            fn [for x in 1..arity -> evalOne tc env] cls
           | Some (SpecialFormNode (_, eval)) ->
             // apply special form
             printfn "calling eval for special form %s" s
             eval tc env
           | Some a -> a // variable value
           | None ->
-            printfn "binding error in %A" env
+            printfn "binding error in %A with env %s" env (env.GetHashCode().ToString())
             raise (BindingError ((sprintf "Unknown binding '%s'" s), s))
 
   | Some (StringNode _ as n) | Some (IntegerNode _ as n) | Some (BoolNode _ as n)
@@ -98,6 +98,7 @@ let _defunEval (tc : Consumable) env =
   let n = {sym=new ExprDict(); prev=Some env}
   let f = FunctionNode (name, args.Length, n, fn)
   setSymLocal env name f
+  printfn "function env hash: %s" (n.GetHashCode().ToString())
   NilNode
 
 let initSym () =

@@ -26,7 +26,7 @@
     </DocumentationFile>
     <OtherFlags>
     </OtherFlags>
-    <StartArguments>examples/struct.ps</StartArguments>
+    <StartArguments>examples/test.ps</StartArguments>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
     <DebugType>pdbonly</DebugType>
