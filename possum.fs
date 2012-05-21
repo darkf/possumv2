@@ -11,19 +11,18 @@ open Types
 open Env
 open Parser
 
-
 let gSym = new ExprDict()
 let gSpecialForms = new Dictionary<string, (Consumable -> expr)>()
 let envstack = new Stack<Environment>()
 let globalEnv = {sym=gSym; prev=None}
 
+// since environments should be immutable between calls, we clone the environment
 let cloneEnv env =
   {sym=new ExprDict(env.sym); prev=env.prev}
 
-
 let isFunction e =
   match e with
-    Some (FunctionNode (_, _, _, _)) -> true
+  | Some (FunctionNode (_, _, _, _)) -> true
   | _ -> false
 
 let printConsumable (tc : Consumable) =
@@ -32,8 +31,8 @@ let printConsumable (tc : Consumable) =
 
   while doContinue do
     match tc.consume () with
-        Some a -> printfn "%s" (exprToString a)
-      | None ->
+    | Some a -> printfn "%s" (exprToString a)
+    | None ->
         doContinue <- false
   ignore (tc.seek now)
 
@@ -44,17 +43,15 @@ let rec evalOne (tc : Consumable) env : expr =
   | Some (AtomNode s) ->
         let r = lookup env s
         match r with
-          Some (FunctionNode (name, arity, cls, fn)) ->
-            // apply function
-            fn [for x in 1..arity -> evalOne tc env] (cloneEnv cls)
-          | Some (SpecialFormNode (_, eval)) ->
-            // apply special form
-            printfn "calling eval for special form %s" s
-            eval tc env
-          | Some a -> a // variable value
-          | None ->
-            printfn "binding error in %A with env %s" env (env.GetHashCode().ToString())
-            raise (BindingError ((sprintf "Unknown binding '%s'" s), s))
+        | Some (FunctionNode (name, arity, cls, fn)) ->
+          // apply function
+          fn [for x in 1..arity -> evalOne tc env] (cloneEnv cls)
+        | Some (SpecialFormNode (_, eval)) ->
+          // apply special form
+          eval tc env
+        | Some a -> a // variable value
+        | None ->
+          raise (BindingError ((sprintf "Unknown binding '%s'" s), s))
 
   | Some (StringNode _ as n) | Some (IntegerNode _ as n) | Some (BoolNode _ as n)
   | Some (NilNode as n)  | Some (StreamNode _ as n) -> n | Some (StructNode _ as n) | Some (PairNode (_, _) as n) -> n
@@ -85,15 +82,12 @@ let _defunParse (tc : Consumable) env =
 let _defunEval (tc : Consumable) env =
   let name = (tc.consume ()).Value.ToString()
   let args = parseUntil tc env "is"
-
-  printfn "\defun: %s / %A" name args
-
   let body = parseBody tc env
 
   let fn (xargs : expr list) cls : expr =
     for i = 0 to args.Length-1 do
       match args.[i] with
-      | AtomNode s -> printfn "local setting %s to %s" s (exprRepr xargs.[i]); setSymLocal cls s xargs.[i]
+      | AtomNode s -> setSymLocal cls s xargs.[i]
       | _ -> raise (ParseError "argument not an atom")
 
     evalConsumable cls (Consumable body)
@@ -101,7 +95,6 @@ let _defunEval (tc : Consumable) env =
   let n = {sym=new ExprDict(); prev=Some env}
   let f = FunctionNode (name, args.Length, n, fn)
   setSymLocal env name f
-  printfn "function env hash: %s" (n.GetHashCode().ToString())
   NilNode
 
 let _lambdaParse (tc : Consumable) env =
@@ -109,15 +102,12 @@ let _lambdaParse (tc : Consumable) env =
 
 let _lambdaEval (tc : Consumable) env =
   let args = parseUntil tc env "is"
-
-  printfn "\lambda: %A" args
-
   let body = parseBody tc env
 
   let fn (xargs : expr list) cls : expr =
     for i = 0 to args.Length-1 do
       match args.[i] with
-      | AtomNode s -> printfn "local setting %s to %s" s (exprRepr xargs.[i]); setSymLocal cls s xargs.[i]
+      | AtomNode s -> setSymLocal cls s xargs.[i]
       | _ -> raise (ParseError "argument not an atom")
 
     evalConsumable cls (Consumable body)
@@ -166,8 +156,8 @@ let initSym () =
 
   gSym.["concat"] <- FunctionNode ("concat", 2, globalEnv, fun args _ ->
     match args with
-      | [a; b] -> StringNode ((exprToString a) + (exprToString b))
-      | _ -> raise (SemanticError "wrong args to concat"))
+    | [a; b] -> StringNode ((exprToString a) + (exprToString b))
+    | _ -> raise (SemanticError "wrong args to concat"))
 
   (*
   gSym.["list-reverse"] <- FunctionNode ("list-reverse", 1, fun args ->
@@ -239,13 +229,10 @@ let initSym () =
 
   gSym.["set-global-symbol"] <- FunctionNode ("set-global-symbol", 2, globalEnv, fun args env ->
     match args with
-      | [StringNode a; b] ->
-        gSym.[a] <- b
-        b
-      | _ -> raise (SemanticError "invalid args to set-global-symbol"))
-
-  //gSym.["y"] <- IntegerNode 666
-  //gSym.["hc"] <- SpecialFormNode ((fun tc env -> parseUntil tc env "end"), (fun tc env -> failwith "eval hc"))
+    | [StringNode a; b] ->
+      gSym.[a] <- b
+      b
+    | _ -> raise (SemanticError "invalid args to set-global-symbol"))
 
   gSym.["defun"] <- SpecialFormNode (_defunParse, _defunEval)
   gSym.["->"] <- SpecialFormNode (_lambdaParse, _lambdaEval)
