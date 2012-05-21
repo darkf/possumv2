@@ -138,13 +138,14 @@ let initSym () =
       | [StringNode s] -> BoolNode (s.Length = 0)
       | [PairNode (a,_)] -> BoolNode (exprEquals a NilNode)
       | _ -> raise (SemanticError "non-(string|pair) passed to empty?"))
-      
+  *)     
 
-  gSym.["concat"] <- FunctionNode ("concat", 2, fun args ->
+  gSym.["concat"] <- FunctionNode ("concat", 2, globalEnv, fun args _ ->
     match args with
       | [a; b] -> StringNode ((exprToString a) + (exprToString b))
       | _ -> raise (SemanticError "wrong args to concat"))
 
+  (*
   gSym.["list-reverse"] <- FunctionNode ("list-reverse", 1, fun args ->
     match args with
       | [PairNode (_,_) as a] -> possumListReverse a
