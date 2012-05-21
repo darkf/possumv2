@@ -17,6 +17,9 @@ let gSpecialForms = new Dictionary<string, (Consumable -> expr)>()
 let envstack = new Stack<Environment>()
 let globalEnv = {sym=gSym; prev=None}
 
+let cloneEnv env =
+  {sym=new ExprDict(env.sym); prev=env.prev}
+
 
 let isFunction e =
   match e with
@@ -43,7 +46,7 @@ let rec evalOne (tc : Consumable) env : expr =
         match r with
           Some (FunctionNode (name, arity, cls, fn)) ->
             // apply function
-            fn [for x in 1..arity -> evalOne tc env] cls
+            fn [for x in 1..arity -> evalOne tc env] (cloneEnv cls)
           | Some (SpecialFormNode (_, eval)) ->
             // apply special form
             printfn "calling eval for special form %s" s
@@ -100,6 +103,27 @@ let _defunEval (tc : Consumable) env =
   setSymLocal env name f
   printfn "function env hash: %s" (n.GetHashCode().ToString())
   NilNode
+
+let _lambdaParse (tc : Consumable) env =
+  (parseUntil tc env "end") @ [AtomNode "end"]
+
+let _lambdaEval (tc : Consumable) env =
+  let args = parseUntil tc env "is"
+
+  printfn "\lambda: %A" args
+
+  let body = parseBody tc env
+
+  let fn (xargs : expr list) cls : expr =
+    for i = 0 to args.Length-1 do
+      match args.[i] with
+      | AtomNode s -> printfn "local setting %s to %s" s (exprRepr xargs.[i]); setSymLocal cls s xargs.[i]
+      | _ -> raise (ParseError "argument not an atom")
+
+    evalConsumable cls (Consumable body)
+
+  let n = {sym=new ExprDict(); prev=Some env}
+  FunctionNode ("<lambda>", args.Length, n, fn)
 
 let initSym () =
   gSym.["print"] <- FunctionNode ("print", 1, globalEnv, (fun args env -> printfn ": %s" (exprToString args.[0]); NilNode))
@@ -220,10 +244,11 @@ let initSym () =
         b
       | _ -> raise (SemanticError "invalid args to set-global-symbol"))
 
-  gSym.["y"] <- IntegerNode 666
-  gSym.["hc"] <- SpecialFormNode ((fun tc env -> parseUntil tc env "end"), (fun tc env -> failwith "eval hc"))
+  //gSym.["y"] <- IntegerNode 666
+  //gSym.["hc"] <- SpecialFormNode ((fun tc env -> parseUntil tc env "end"), (fun tc env -> failwith "eval hc"))
 
   gSym.["defun"] <- SpecialFormNode (_defunParse, _defunEval)
+  gSym.["->"] <- SpecialFormNode (_lambdaParse, _lambdaEval)
   
   (*gSym.["_printsym"] <- FunctionNode ("_printsym", 0, fun args ->
     //for key in gSym.Keys do
