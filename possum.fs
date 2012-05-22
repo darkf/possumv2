@@ -141,18 +141,18 @@ let initSym () =
     match args.[0] with
       | PairNode (_, _) -> BoolNode true
       | _ -> BoolNode false)
+  *)
 
-  gSym.["nil?"] <- FunctionNode ("nil?", 1, fun args ->
+  gSym.["nil?"] <- FunctionNode ("nil?", 1, globalEnv, fun args _ ->
     match args.[0] with
       | NilNode -> BoolNode true
       | _ -> BoolNode false)
 
-  gSym.["empty?"] <- FunctionNode ("empty?", 1, fun args->
+  gSym.["empty?"] <- FunctionNode ("empty?", 1, globalEnv, fun args _ ->
     match args with
       | [StringNode s] -> BoolNode (s.Length = 0)
       | [PairNode (a,_)] -> BoolNode (exprEquals a NilNode)
-      | _ -> raise (SemanticError "non-(string|pair) passed to empty?"))
-  *)     
+      | _ -> raise (SemanticError "non-(string|pair) passed to empty?"))     
 
   gSym.["concat"] <- FunctionNode ("concat", 2, globalEnv, fun args _ ->
     match args with
@@ -198,11 +198,13 @@ let initSym () =
         toPossumList (List.rev (iter p 0 []))
       | _ -> raise (SemanticError "wrong args to with-set-at"))
 
-  gSym.["not"] <- FunctionNode ("not", 1, fun args ->
+  *)
+  gSym.["not"] <- FunctionNode ("not", 1, globalEnv, fun args _ ->
     match args with
       | [BoolNode b] -> BoolNode (not b)
       | _ -> raise (SemanticError "non-bool passed to not"))
 
+  (*
   gSym.["str"] <- FunctionNode ("str", 1, fun args -> StringNode (exprToString args.[0]))
   gSym.["int"] <- FunctionNode ("int", 1, fun args ->
     match args with
