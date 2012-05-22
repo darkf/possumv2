@@ -234,6 +234,16 @@ let initSym () =
       b
     | _ -> raise (SemanticError "invalid args to set-global-symbol"))
 
+  gSym.["quote"] <- SpecialFormNode ((fun tc -> parseOne tc), (fun tc env -> match tc.consume() with | Some a -> a | None -> NilNode))
+  gSym.["quote-eval"] <- SpecialFormNode ((fun tc -> parseOne tc), (fun tc env ->
+    match tc.consume() with
+    | Some (AtomNode s) ->
+      match lookup env s with
+      | Some a -> a
+      | None -> AtomNode s
+    | _ -> raise (ParseError "quote-eval")
+    ))
+
   gSym.["defun"] <- SpecialFormNode (_defunParse, _defunEval)
   gSym.["->"] <- SpecialFormNode (_lambdaParse, _lambdaEval)
   
