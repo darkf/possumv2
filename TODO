@@ -1,4 +1,8 @@
+General
+-----------
+
 - Modules (figure out how to register them)
+- Type predicates (`string?`, `int?`, `struct?` etc)
 - Clean up hacky imperative code (`let mutable x = ...`)
 - Clean up list building (use `cons` with `List.rev` instead of `xs <- xs @ [...]`)
 - Fix `expr.ToString()`
