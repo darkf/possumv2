@@ -248,6 +248,14 @@ let initSym () =
 
   gSym.["defun"] <- SpecialFormNode (_defunParse, _defunEval)
   gSym.["->"] <- SpecialFormNode (_lambdaParse, _lambdaEval)
+
+  gSym.["define"] <- SpecialFormNode ((fun tc env -> parseN tc env 3), (fun tc env ->
+                                      match tc.consume() with
+                                      | Some (AtomNode s) ->
+                                        let value = evalOne tc env
+                                        setSymLocal env s value
+                                        value
+                                      | _ -> raise (ParseError "non-atom given to define")))
   
   (*gSym.["_printsym"] <- FunctionNode ("_printsym", 0, fun args ->
     //for key in gSym.Keys do
