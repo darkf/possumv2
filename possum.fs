@@ -115,6 +115,33 @@ let _lambdaEval (tc : Consumable) env =
   let n = {sym=new ExprDict(); prev=Some env}
   FunctionNode ("<lambda>", args.Length, n, fn)
 
+let _ifParse (tc : Consumable) env =
+  let cond = parseOne tc env
+  let then1 = parseOne tc env
+  match tc.peek () with
+    | Some (AtomNode "else") ->
+      ignore (tc.consume ());
+      let then2 = parseOne tc env
+      cond @ then1 @ [AtomNode "else"] @ then2
+    | _ ->
+      cond @ then1
+
+let _ifEval (tc : Consumable) env =
+  let cond = exprToBool (evalOne tc env)
+  let then1 = parseOne tc env
+  
+  match tc.peek () with
+    | Some (AtomNode "else") ->
+      ignore (tc.consume ()); // consume else
+      if cond then
+        let r = evalConsumable env (Consumable then1)
+        ignore (parseOne tc) // consume else part
+        r
+      else
+        evalOne tc env
+    | _ ->
+      if cond then evalConsumable env (Consumable then1) else NilNode
+
 let initSym () =
   gSym.["print"] <- FunctionNode ("print", 1, globalEnv, (fun args env -> printfn ": %s" (exprToString args.[0]); NilNode))
   gSym.["print-raw"] <- FunctionNode ("print-raw", 1, globalEnv, (fun args env -> printf "%s" (exprToString args.[0]); NilNode))
@@ -249,13 +276,15 @@ let initSym () =
   gSym.["defun"] <- SpecialFormNode (_defunParse, _defunEval)
   gSym.["->"] <- SpecialFormNode (_lambdaParse, _lambdaEval)
 
-  gSym.["define"] <- SpecialFormNode ((fun tc env -> parseN tc env 3), (fun tc env ->
+  gSym.["define"] <- SpecialFormNode ((fun tc env -> parseN tc env 2), (fun tc env ->
                                       match tc.consume() with
                                       | Some (AtomNode s) ->
                                         let value = evalOne tc env
                                         setSymLocal env s value
                                         value
                                       | _ -> raise (ParseError "non-atom given to define")))
+
+  gSym.["if"] <- SpecialFormNode (_ifParse, _ifEval)
   
   (*gSym.["_printsym"] <- FunctionNode ("_printsym", 0, fun args ->
     //for key in gSym.Keys do
