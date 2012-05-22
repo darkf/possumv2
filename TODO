@@ -1,73 +1,92 @@
-- Maybe separate special forms into a parsing and an evaluating section and store them in modules with a dictionary
-- Clean up hacky imperative code ("let mutable x = ...")
-- Clean up list building (use cons with List.rev instead of xs <- xs @ [...])
-- Fix expr.ToString()
-- Add basic typechecking to builtins
-- Structs? (just scheme-like; defstruct foo is x y end define bar new foo foo-set-x bar 5 print foo-x bar)
-- s?printf (how to implement this with fixed arity? lists or special form that parses the format string?)
-- For loop iterators (for expr in expr do ... end - e.g. for i in list-range 1 5 do print i end could eventually end up with list comprehension syntax like for x is * i 2 in ... end)
+- Modules (figure out how to register them)
+- Clean up hacky imperative code (`let mutable x = ...`)
+- Clean up list building (use `cons` with `List.rev` instead of `xs <- xs @ [...]`)
+- Fix `expr.ToString()`
+- Add basic type-checking to builtins
+- Improve structs (accessors)
+- `s?printf` (how to implement this with fixed arity? lists or special form that parses the format string?)
+- For loop iterators (`for expr in expr do ... end` - e.g. `for i in list-range 1 5 do print i end` could eventually end up with list comprehension syntax like `for x is * i 2 in ... end`)
 - While loops
-- Maybe + on strings and lists for concatenation?
+- Make `+`, `-`, `slice` etc polymorphic across types
 - Dictionaries
-- set-car and set-cdr
+- `set-car!` and `set-cdr!`
 - Unit testing? Maybe?
-- Functions: include, assert, lambda
-- Fix stream-read-all for sockets
-- Rename define to something more concise (def, let, var, val, etc)
+- Functions: `include`, `assert`, `lambda`
+- Fix `stream-read-all` for sockets
+- Rename `define` to something more concise (`def`, `let`, `var`, `val`, etc)
 - Tail call optimization
-- Builtins should use "match args with | [a; b; c]" syntax instead of addressing by index
-- Builtins should have a type signature as a comment (e.g. // stream-close stream -> nil)
-- High order functions should be supported (maybe an apply function)
+- Builtins should use `match args with | [a; b; c]` syntax instead of addressing by index
+- Builtins should have a type signature as a comment (e.g. `// stream-close stream -> nil`)
+- High order functions should be supported (maybe an `apply` function)
 
 Modules that should be in stdlib:
-- text
-  done:
-    regex-match
-    string-split
-    substring
-  todo:
-    regex-search
-    regex-replace
-    string-replace
-    string-reverse
-    string-repeat
-    lines
-    unlines
-    string-find
 
-- stream
-  done:
-    socket-open
-    file-open
-    stream-close
-    stream-{read,write}
-    stream-read-all
-    stream-read-line
-  todo:
-    stream-{read,write}-u?int{8,16,32,64}
-    stream-status
-    socket-listen
-    socket-accept
+text
+--------------
 
-- http
-  todo:
-    http-get
-    http-post
+**done**
 
-- list
-  done:
-    list-reverse
-    list-append
-  todo:
-    ca+dr
-    cd+r
-    caadr
-    list-repeat
-    list-length
-    list-splice
-    list-range
-    list-concat
-    map
-    zip
-    filter
-    reduce
+     regex-match
+     string-split
+     substring
+
+**todo**
+
+     regex-search
+     regex-replace
+     string-replace
+     string-reverse
+     string-repeat
+     lines
+     unlines
+     string-find
+
+stream
+----------
+
+**done**
+
+     socket-open
+     file-open
+     stream-close
+     stream-{read,write}
+     stream-read-all
+     stream-read-line
+
+**todo**
+
+     stream-{read,write}-u?int{8,16,32,64}
+     stream-status
+     socket-listen
+     socket-accept
+
+http
+-----------
+
+**todo**
+
+     http-get
+     http-post
+
+list
+----------
+
+**done**
+
+     list-reverse
+     list-append
+
+**todo**
+
+     ca+dr
+     cd+r
+     caadr
+     list-repeat
+     list-length
+     list-splice
+     list-range
+     list-concat
+     map
+     zip
+     filter
+     reduce
