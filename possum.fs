@@ -149,26 +149,25 @@ let initSym () =
   gSym.["+"] <- FunctionNode ("+", 2, globalEnv, _fnPlus)
   gSym.["-"] <- FunctionNode ("-", 2, globalEnv, _fnMinus)
   gSym.["*"] <- FunctionNode ("*", 2, globalEnv, _fnMul)
-  (*gSym.["="] <- FunctionNode ("=", 2, fun args -> 
+  gSym.["="] <- FunctionNode ("=", 2, globalEnv, fun args _ -> 
     let r = (exprEquals args.[0] args.[1])
     //printfn "eq? : %s" (if r = true then "true" else "false")
     BoolNode r)
 
-  gSym.["cons"] <- FunctionNode ("cons", 2, fun args -> PairNode (args.[0], args.[1]))
-  gSym.["car"] <- FunctionNode ("car", 1, fun args ->
+  gSym.["cons"] <- FunctionNode ("cons", 2, globalEnv, fun args _ -> PairNode (args.[0], args.[1]))
+  gSym.["car"] <- FunctionNode ("car", 1, globalEnv, fun args _ ->
     match args.[0] with
       | PairNode (a, _) -> a
       | _ -> raise (SemanticError "non-pair passed to car"))
-  gSym.["cdr"] <- FunctionNode ("cdr", 1, fun args ->
+  gSym.["cdr"] <- FunctionNode ("cdr", 1, globalEnv, fun args _ ->
     match args.[0] with
       | PairNode (_, b) -> b
       | _ -> raise (SemanticError "non-pair passed to cdr"))
 
-  gSym.["pair?"] <- FunctionNode ("pair?", 1, fun args ->
+  gSym.["pair?"] <- FunctionNode ("pair?", 1, globalEnv, fun args _ ->
     match args.[0] with
       | PairNode (_, _) -> BoolNode true
       | _ -> BoolNode false)
-  *)
 
   gSym.["nil?"] <- FunctionNode ("nil?", 1, globalEnv, fun args _ ->
     match args.[0] with
@@ -186,13 +185,12 @@ let initSym () =
     | [a; b] -> StringNode ((exprToString a) + (exprToString b))
     | _ -> raise (SemanticError "wrong args to concat"))
 
-  (*
-  gSym.["list-reverse"] <- FunctionNode ("list-reverse", 1, fun args ->
+  gSym.["list-reverse"] <- FunctionNode ("list-reverse", 1, globalEnv, fun args _ ->
     match args with
       | [PairNode (_,_) as a] -> possumListReverse a
       | _ -> raise (SemanticError "non-list passed to list-reverse"))
 
-  gSym.["at"] <- FunctionNode ("at", 2, fun args ->
+  gSym.["at"] <- FunctionNode ("at", 2, globalEnv, fun args _ ->
     match args with
       | [PairNode (_,_) as a; IntegerNode index] ->
         let rec iter l i =
@@ -210,7 +208,7 @@ let initSym () =
         else (StringNode (string s.[index]))
       | _ -> raise (SemanticError "non-string/list passed to at"))
 
-  gSym.["with-set-at"] <- FunctionNode ("set-at", 3, fun args ->
+  gSym.["with-set-at"] <- FunctionNode ("set-at", 3, globalEnv, fun args _ ->
     match args with
       | [PairNode (a, b) as p; IntegerNode index; value] ->
         let rec iter l i xs =
@@ -225,36 +223,33 @@ let initSym () =
         toPossumList (List.rev (iter p 0 []))
       | _ -> raise (SemanticError "wrong args to with-set-at"))
 
-  *)
   gSym.["not"] <- FunctionNode ("not", 1, globalEnv, fun args _ ->
     match args with
       | [BoolNode b] -> BoolNode (not b)
       | _ -> raise (SemanticError "non-bool passed to not"))
 
-  (*
-  gSym.["str"] <- FunctionNode ("str", 1, fun args -> StringNode (exprToString args.[0]))
-  gSym.["int"] <- FunctionNode ("int", 1, fun args ->
+  gSym.["str"] <- FunctionNode ("str", 1, globalEnv, fun args _ -> StringNode (exprToString args.[0]))
+  gSym.["int"] <- FunctionNode ("int", 1, globalEnv, fun args _ ->
     match args with
       | [IntegerNode i as x]-> x
       | [StringNode s] -> IntegerNode (Int32.Parse s)
       | _ -> raise (SemanticError "wrong value passed to int"))
-  gSym.["substring"] <- FunctionNode ("substring", 3, fun args ->
+  gSym.["substring"] <- FunctionNode ("substring", 3, globalEnv, fun args _ ->
     match args with
       | [StringNode str; IntegerNode start; IntegerNode len] ->
         StringNode (str.Substring(start, len))
       | _ -> raise (SemanticError "substring takes string -> int -> int"))
-  gSym.["string-length"] <- FunctionNode ("string-length", 1, fun args ->
+  gSym.["string-length"] <- FunctionNode ("string-length", 1, globalEnv, fun args _ ->
     match args with
       | [StringNode str] ->
         IntegerNode str.Length
       | _ -> raise (SemanticError "non-string passed to string-length"))
-  gSym.["string-split"] <- FunctionNode ("string-split", 2, fun args ->
+  gSym.["string-split"] <- FunctionNode ("string-split", 2, globalEnv, fun args _ ->
     match args with
       | [StringNode str; StringNode delim] ->
         let s = str.Split([| delim |], StringSplitOptions.None)
         toPossumList (List.init s.Length (fun i -> StringNode s.[i]))
       | _ -> raise (SemanticError "non-string given to string-split"))
-  *)
 
   gSym.["set-global-symbol"] <- FunctionNode ("set-global-symbol", 2, globalEnv, fun args env ->
     match args with
@@ -270,8 +265,7 @@ let initSym () =
       match lookup env s with
       | Some a -> a
       | None -> AtomNode s
-    | _ -> raise (ParseError "quote-eval")
-    ))
+    | _ -> raise (ParseError "quote-eval")))
 
   gSym.["defun"] <- SpecialFormNode (_defunParse, _defunEval)
   gSym.["->"] <- SpecialFormNode (_lambdaParse, _lambdaEval)
