@@ -52,7 +52,6 @@ and parseOne (tc : Consumable) env =
         else *)
           match lookup env s with
           | Some (SpecialFormNode (parse, _)) ->
-            printfn "calling special form's parse for %s" s
             [AtomNode s] @ parse tc env
           | Some (FunctionNode (_, arity, _, _)) ->
               //printfn "> consuming arguments for function %s: %d" name arity
