@@ -25,7 +25,7 @@ let main =
         match input with
           | ":q" | ":quit" | ":exit" -> cont <- false
           | _ ->
-            let r = (Consumable (tokenizeString input)) |> evalConsumable globalEnv
+            let r = Consumable (tokenizeString input) |> evalConsumable globalEnv
             printfn "%s" (exprRepr r)
       with
         | BindingError (msg, _) -> printfn "BindingError: %s" msg
@@ -33,18 +33,17 @@ let main =
         | ParseError msg ->        printfn "ParseError: %s" msg
         | e ->                     printfn "Unhandled exception: %s" e.Message
   else
-    let tokens = tokenizeFile args.[1] //"defun f is end print \"hi\""
+    let tokens = tokenizeFile args.[1]
     let tc = Consumable tokens
-    //printConsumable tc
     initSym ()
     
     let st = parseExprs tc globalEnv
     try
-      ignore (evalConsumable globalEnv st)
+      evalConsumable globalEnv st |> ignore
     with
       | BindingError (msg, _) -> printfn "BindingError: %s" msg
       | SemanticError msg ->     printfn "SemanticError: %s" msg
       | ParseError msg ->        printfn "ParseError: %s" msg
       | e ->                     printfn "Unhandled exception: %s" e.Message
 
-    ignore (System.Console.ReadKey ())
+    System.Console.ReadKey () |> ignore

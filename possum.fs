@@ -12,37 +12,16 @@ open Env
 open Parser
 
 let gSym = new ExprDict()
-let gSpecialForms = new Dictionary<string, (Consumable -> expr)>()
-let envstack = new Stack<Environment>()
 let globalEnv = {sym=gSym; prev=None}
 
 // since environments should be immutable between calls, we clone the environment
 let cloneEnv env =
   {sym=new ExprDict(env.sym); prev=env.prev}
 
-let isFunction e =
-  match e with
-  | Some (FunctionNode (_, _, _, _)) -> true
-  | _ -> false
-
-let printConsumable (tc : Consumable) =
-  let mutable doContinue = true
-  let now = tc.tell ()
-
-  while doContinue do
-    match tc.consume () with
-    | Some a -> printfn "%s" (exprToString a)
-    | None ->
-        doContinue <- false
-  ignore (tc.seek now)
-
-
 let rec evalOne (tc : Consumable) env : expr =
-  let t = tc.consume ()
-  match t with
+  match tc.consume () with
   | Some (AtomNode s) ->
-        let r = lookup env s
-        match r with
+        match lookup env s with
         | Some (FunctionNode (name, arity, cls, fn)) ->
           // apply function
           fn [for x in 1..arity -> evalOne tc env] (cloneEnv cls)
@@ -55,8 +34,7 @@ let rec evalOne (tc : Consumable) env : expr =
 
   | Some (StringNode _ as n) | Some (IntegerNode _ as n) | Some (BoolNode _ as n)
   | Some (NilNode as n)  | Some (StreamNode _ as n) -> n | Some (StructNode _ as n) | Some (PairNode (_, _) as n) -> n
-  | Some (FunctionNode (_, _, _, _) as n) -> n
-  | Some (SpecialFormNode (_, _) as n) -> n
+  | Some (FunctionNode (_, _, _, _) as n) | Some (SpecialFormNode (_, _) as n) -> n
   | None -> raise (ParseError "None given to evalOne")
 
 and evalConsumable env (tc : Consumable) : expr =
@@ -120,7 +98,7 @@ let _ifParse (tc : Consumable) env =
   let then1 = parseOne tc env
   match tc.peek () with
     | Some (AtomNode "else") ->
-      ignore (tc.consume ());
+      tc.consume() |> ignore
       let then2 = parseOne tc env
       cond @ then1 @ [AtomNode "else"] @ then2
     | _ ->
@@ -132,10 +110,10 @@ let _ifEval (tc : Consumable) env =
   
   match tc.peek () with
     | Some (AtomNode "else") ->
-      ignore (tc.consume ()); // consume else
+      tc.consume () |> ignore // consume else
       if cond then
         let r = evalConsumable env (Consumable then1)
-        ignore (parseOne tc) // consume else part
+        parseOne tc |> ignore // consume else part
         r
       else
         evalOne tc env
@@ -220,6 +198,7 @@ let initSym () =
                 iter j (i + 1) (value :: xs)
               else
                 iter j (i + 1) (h :: xs)
+            | _ -> raise (SemanticError "with-set-at")
         toPossumList (List.rev (iter p 0 []))
       | _ -> raise (SemanticError "wrong args to with-set-at"))
 

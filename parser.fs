@@ -5,10 +5,9 @@ open Env
 
 let rec parseUntil (tc : Consumable) env until =
   let rec iter xs =
-    let t = tc.peek ()
-    match t with
+    match tc.peek () with
       Some (AtomNode s) when s = until ->
-          ignore (tc.consume ())
+          tc.consume () |> ignore
           xs
       | None -> xs
       | _ ->
@@ -16,12 +15,11 @@ let rec parseUntil (tc : Consumable) env until =
   iter []
 
 and parseBody (tc : Consumable) env =
-  // parse until "end", basically
+  // parse until "end"
   parseUntil tc env "end"
 
 and parseOne (tc : Consumable) env =
-    let t = tc.consume ()
-    match t with
+    match tc.consume () with
       Some (AtomNode s) ->
         (*
         if gSpecialForms.ContainsKey s then
@@ -54,7 +52,6 @@ and parseOne (tc : Consumable) env =
           | Some (SpecialFormNode (parse, _)) ->
             [AtomNode s] @ parse tc env
           | Some (FunctionNode (_, arity, _, _)) ->
-              //printfn "> consuming arguments for function %s: %d" name arity
               let args = parseN tc env arity
               [AtomNode s] @ args
          
