@@ -233,7 +233,7 @@ let initSym () =
   gSym.["set-global-symbol"] <- FunctionNode ("set-global-symbol", 2, globalEnv, fun args env ->
     match args with
     | [StringNode a; b] ->
-      gSym.[a] <- b
+      setSymLocal globalEnv a b
       b
     | _ -> raise (SemanticError "invalid args to set-global-symbol"))
 
