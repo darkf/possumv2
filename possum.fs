@@ -120,6 +120,17 @@ let _ifEval (tc : Consumable) env =
     | _ ->
       if cond then evalConsumable env (Consumable then1) else NilNode
 
+
+let _beginParse (tc : Consumable) env =
+  (parseUntil tc env "end") @ [AtomNode "end"]
+
+let _beginEval (tc : Consumable) env =
+  let rec iter r =
+    match tc.peek () with
+    | Some (AtomNode "end") -> tc.consume () |> ignore; r
+    | _ -> iter (evalOne tc env)
+  iter NilNode
+
 let initSym () =
   gSym.["print"] <- FunctionNode ("print", 1, globalEnv, (fun args env -> printfn ": %s" (exprToString args.[0]); NilNode))
   gSym.["print-raw"] <- FunctionNode ("print-raw", 1, globalEnv, (fun args env -> printf "%s" (exprToString args.[0]); NilNode))
@@ -258,6 +269,7 @@ let initSym () =
                                       | _ -> raise (ParseError "non-atom given to define")))
 
   gSym.["if"] <- SpecialFormNode (_ifParse, _ifEval)
+  gSym.["begin"] <- SpecialFormNode (_beginParse, _beginEval)
   
   (*gSym.["_printsym"] <- FunctionNode ("_printsym", 0, fun args ->
     //for key in gSym.Keys do
