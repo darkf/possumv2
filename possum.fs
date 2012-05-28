@@ -113,7 +113,7 @@ let _ifEval (tc : Consumable) env =
       tc.consume () |> ignore // consume else
       if cond then
         let r = evalConsumable env (Consumable then1)
-        parseOne tc |> ignore // consume else part
+        parseOne tc env |> ignore // consume else part
         r
       else
         evalOne tc env
