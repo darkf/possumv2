@@ -1,0 +1,15 @@
+defun for-range start stop f is
+  defun iter i is
+    if not = i stop
+      begin
+        f i
+        iter + i 1
+      end
+  end
+
+  iter start
+end
+
+for-range 5 10 -> i is
+  print i
+end
