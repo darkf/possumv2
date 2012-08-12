@@ -25,7 +25,7 @@ Unfortunately, possum is at a very early stage in development, so expect bugs an
 
 Usage:
 
-- Compile with `fsc.exe types.fs possum.fsi lib/stream.fs lib/text.fs possum.fs parser.fs main.fs -o possum.exe` (although a solution file for Visual Studio 2010 is included.)
+- Compile with `fsc.exe types.fs tokenize.fs environment.fs possum.fsi parser.fs possum.fs main.fs -o possum.exe` (although a solution file for Visual Studio 2010 is included.)
 
 - Run `possum.exe examples/hi.ps`
   or without arguments to enter REPL mode
