@@ -142,6 +142,34 @@ let _listEval (tc : Consumable) env =
     | None -> raise (ParseError "expected end, not EOF")
   possumListReverse (iter NilNode)
 
+let _condParse (tc : Consumable) env =
+  (parseUntil tc env "end") @ [AtomNode "end"]
+
+let _condEval (tc : Consumable) env =
+  // cond
+  //   or nil? x empty? x
+  //     print "nil or empty"
+  //   true
+  //     print "not nil or empty"
+  // end
+
+  let rec iter () =
+    match tc.peek () with
+      | Some (AtomNode "end") ->
+        ignore (tc.consume ())
+        NilNode
+      | _ ->
+        let cond = evalOne tc env
+       
+        if (exprToBool cond) = true then
+          let r = evalOne tc env
+          ignore (parseUntil tc env "end")
+          r
+        else
+          ignore (parseOne tc env) // get rid of path that didn't match
+          iter ()
+  iter ()
+
 let initSym () =
   gSym.["print"] <- FunctionNode ("print", 1, globalEnv, (fun args env -> printfn ": %s" (exprToString args.[0]); NilNode))
   gSym.["print-raw"] <- FunctionNode ("print-raw", 1, globalEnv, (fun args env -> printf "%s" (exprToString args.[0]); NilNode))
@@ -282,6 +310,7 @@ let initSym () =
   gSym.["if"] <- SpecialFormNode (_ifParse, _ifEval)
   gSym.["begin"] <- SpecialFormNode (_beginParse, _beginEval)
   gSym.["list"] <- SpecialFormNode (_listParse, _listEval)
+  gSym.["cond"] <- SpecialFormNode (_condParse, _condEval)
   
   (*gSym.["_printsym"] <- FunctionNode ("_printsym", 0, fun args ->
     //for key in gSym.Keys do
