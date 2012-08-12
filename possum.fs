@@ -131,6 +131,17 @@ let _beginEval (tc : Consumable) env =
     | _ -> iter (evalOne tc env)
   iter NilNode
 
+let _listParse (tc : Consumable) env =
+  (parseUntil tc env "end") @ [AtomNode "end"]
+
+let _listEval (tc : Consumable) env =
+  let rec iter (xs : expr) =
+    match tc.consume () with
+    | Some (AtomNode "end") -> xs
+    | Some a -> iter (PairNode (a, xs))
+    | None -> raise (ParseError "expected end, not EOF")
+  possumListReverse (iter NilNode)
+
 let initSym () =
   gSym.["print"] <- FunctionNode ("print", 1, globalEnv, (fun args env -> printfn ": %s" (exprToString args.[0]); NilNode))
   gSym.["print-raw"] <- FunctionNode ("print-raw", 1, globalEnv, (fun args env -> printf "%s" (exprToString args.[0]); NilNode))
@@ -270,6 +281,7 @@ let initSym () =
 
   gSym.["if"] <- SpecialFormNode (_ifParse, _ifEval)
   gSym.["begin"] <- SpecialFormNode (_beginParse, _beginEval)
+  gSym.["list"] <- SpecialFormNode (_listParse, _listEval)
   
   (*gSym.["_printsym"] <- FunctionNode ("_printsym", 0, fun args ->
     //for key in gSym.Keys do
