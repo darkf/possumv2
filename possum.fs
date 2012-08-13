@@ -170,6 +170,17 @@ let _condEval (tc : Consumable) env =
           iter ()
   iter ()
 
+let _setParse (tc : Consumable) env =
+  parseN tc env 2
+
+let _setEval (tc : Consumable) env =
+  match tc.consume () with
+  | Some (AtomNode s) ->
+      let value = evalOne tc env
+      setSymFar env s value
+      value
+  | _ -> raise (SemanticError "non-atom given to set")
+
 let initSym () =
   gSym.["print"] <- FunctionNode ("print", 1, globalEnv, (fun args env -> printfn ": %s" (exprToString args.[0]); NilNode))
   gSym.["print-raw"] <- FunctionNode ("print-raw", 1, globalEnv, (fun args env -> printf "%s" (exprToString args.[0]); NilNode))
@@ -311,6 +322,8 @@ let initSym () =
   gSym.["begin"] <- SpecialFormNode (_beginParse, _beginEval)
   gSym.["list"] <- SpecialFormNode (_listParse, _listEval)
   gSym.["cond"] <- SpecialFormNode (_condParse, _condEval)
+  gSym.["set!"] <- SpecialFormNode (_setParse, _setEval)
+  gSym.["set"] <- SpecialFormNode (_setParse, _setEval)
   
   (*gSym.["_printsym"] <- FunctionNode ("_printsym", 0, fun args ->
     //for key in gSym.Keys do
